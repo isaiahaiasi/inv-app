@@ -5,7 +5,8 @@
   "scripts": {
     "start": "node ./bin/www",
     "startmon": "nodemon ./bin/www",
-    "dev": "DEBUG=inv-app:* npm run startmon"
+    "dev": "DEBUG=inv-app:* npm run startmon",
+    "tailwind:css": "postcss public/styles/tailwind.css -o public/styles/style.css"
   },
   "dependencies": {
     "cookie-parser": "~1.4.4",
@@ -16,5 +17,11 @@
     "http-errors": "~1.6.3",
     "morgan": "~1.9.1",
     "nodemon": "^2.0.7"
+  },
+  "devDependencies": {
+    "autoprefixer": "^10.2.5",
+    "postcss": "^8.3.0",
+    "postcss-cli": "^8.3.1",
+    "tailwindcss": "^2.1.2"
   }
 }
