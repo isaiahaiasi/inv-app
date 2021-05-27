@@ -1,8 +1,8 @@
 # TO-Do:
 
-- Spin up MongoDB server using Atlas
-- Add Mongoose to project
-- Add Schemas & models for Product and Category
+- ~~Spin up MongoDB server using Atlas~~
+- ~~Add Mongoose to project~~
+- ~~Add Schemas & models for Product and Category~~
 - Populate database with custom populatedb.js file
 - Add routes & controllers for index, products, categories
 - Add 'READ' views
