@@ -9,5 +9,7 @@
 - Add forms & controllers for the CUD
 - Add image upload functionality (firebase cloud storage?)
 - Password-protect create/update/delete POSTs
+- Add profanity filter
+- extend populatedb to pull data from csv file
 - Deploy!
 - Test rebuilding on another machine & make any necessary adjustments to README instructions
