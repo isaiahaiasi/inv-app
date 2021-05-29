@@ -24,4 +24,8 @@ ProductSchema.virtual("url").get(function () {
   return `${INV_URL_NAME}/product/${this._id}`;
 });
 
+ProductSchema.virtual("price_formatted").get(function () {
+  return "$" + this.price / 100;
+});
+
 module.exports = mongoose.model("Product", ProductSchema);
