@@ -21,11 +21,15 @@ const ProductSchema = new Schema({
 });
 
 ProductSchema.virtual("url").get(function () {
-  return `${INV_URL_NAME}/product/${this._id}`;
+  return `/${INV_URL_NAME}/product/${this._id}`;
 });
 
-ProductSchema.virtual("price_formatted").get(function () {
+ProductSchema.virtual("priceFormatted").get(function () {
   return "$" + this.price / 100;
+});
+
+ProductSchema.virtual("isLowStock").get(function () {
+  return this.stock <= 5;
 });
 
 module.exports = mongoose.model("Product", ProductSchema);

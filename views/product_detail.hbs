@@ -1,0 +1,19 @@
+<h3 class="text-4xl">{{product.name}}</h3>
+<dl class="flex flex-col">
+  <div>
+    <dt class="text-xl">description</dt>
+    <dd>{{product.description}}</dd>
+  </div>
+  <div>
+    <dt class="text-xl">category</dt>
+    <dd>{{product.category.name}}</dd>
+  </div>
+  <div>
+    <dd class="text-xl">price:</dd>
+    <dd>{{product.priceFormatted}}</dd>
+  </div>
+  <div>
+    <dt class="text-xl">remaining:</dt>
+    <dd>{{product.stock}}</dd>
+  </div>
+</dl>
