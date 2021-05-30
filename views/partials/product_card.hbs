@@ -3,13 +3,13 @@
     {{product.name}}
   </a>
 </h3>
-<dl class="flex flex-row">
-  <div class="flex gap-1 items-end">
+<dl>
+  <div class="flex gap-1 items-start">
     <dt class="text-xl">price:</dt>
     <dd>{{product.priceFormatted}}</dd>
   </div>
   {{#if product.category.name}}
-    <div class="flex gap-1">
+    <div class="flex gap-1 items-start">
       <dt class="text-xl">category:</dt>
       <dd>{{product.category.name}}</dd>
     </div>
