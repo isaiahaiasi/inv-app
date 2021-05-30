@@ -1,7 +1,12 @@
 const mongoose = require("mongoose");
+const { body, validationResult } = require("express-validator");
 
 const Category = require("../models/category");
 const Product = require("../models/product");
+
+// same validation for create & update
+const validateAndSanitize = [body("name").trim().isLength({ min: 1 }).escape()];
+
 exports.categoryList = (req, res, next) => {
   Category.find({})
     .sort("name")
@@ -33,7 +38,44 @@ exports.categoryDetail = (req, res, next) => {
     });
 };
 
-exports.createCategory = (req, res) => {
-  console.log("hello world");
+exports.getCreateCategory = (req, res) => {
   res.render("category_form", { title: "Add Category" });
 };
+
+exports.postCreateCategory = [
+  // validate & sanitize
+  ...validateAndSanitize,
+  (req, res, next) => {
+    // extract validation errors
+    const errors = validationResult(req);
+
+    const category = new Category({ name: req.body.name });
+
+    if (!errors.isEmpty()) {
+      res.render("category_form", {
+        title: "Create Category",
+        category,
+        errors: errors.array(),
+      });
+      return;
+    }
+
+    // if the category already exists, just redirect to that category
+    // otherwise, add it to the db & redirect to that page
+    Category.findOne({ name: req.body.name })
+      .exec()
+      .then((foundCategory) => {
+        if (foundCategory) {
+          res.redirect(foundCategory.url);
+          return;
+        }
+
+        // no errors, data is valid, and category doesn't exist yet
+        category
+          .save()
+          .then(() => res.redirect(category.url))
+          .catch((err) => next(err));
+      })
+      .catch((err) => next(err));
+  },
+];
