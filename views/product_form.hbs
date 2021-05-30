@@ -1,0 +1,65 @@
+{{#> main_content}}
+  <h1 class="text-6xl">{{title}}</h1>
+  <form method="POST" action="">
+    <div class="p-2 flex flex-col">
+      <label for="name">Name: </label>
+      <input 
+      class="rounded-sm pr-2 pl-2 text-gray-900"
+        id="name" 
+        name="name" 
+        type="text" 
+        required="true"
+        placeholder="Pebble, Blunderbuss, etc."
+        value={{#if product}}{{product.name}}{{else}}""{{/if}}
+      >
+    </div>
+    <div class="p-2 flex flex-col">
+      <label for="description">Description: </label>
+      <textarea
+      class="rounded-sm pr-2 pl-2 text-gray-900"
+        id="description"
+        name="description"
+        required="true"
+        placeholder="Product description"
+      >{{#if product}}{{product.description}}{{/if}}</textarea>
+    </div>
+    <div class="p-2 flex flex-col">
+      {{!-- Might need a helper function to default to current category for update --}}
+      <label for="category">Category: </label>
+      <select 
+        class="rounded-sm pr-2 pl-2 text-gray-900"
+        
+        >
+        {{#each categories}}
+          <option value={{this._id}}>{{this.name}}</option>
+        {{/each}}
+      </select>
+    </div>
+    <div class="p-2 flex flex-col">
+      <label for="price">Price: </label>
+      <input
+        class="rounded-sm pr-2 pl-2 text-gray-900"
+        id="price"
+        name="price"
+        type="number"
+        {{#if product}}value={{product.price}}{{/if}}
+        required="true"
+      >
+    </div>
+    <div class="p-2 flex flex-col">
+      <label for="stock">Stock: </label>
+      <input
+        class="rounded-sm pr-2 pl-2 text-gray-900"
+        id="stock"
+        name="stock"
+        type="number"
+        required="true"
+        {{#if product}}value={{product.stock}}{{/if}}
+      >
+    </div>
+    <div class="pl-2 pt-2">
+    {{#> button type="submit"}}Submit{{/button}}
+
+    </div>
+  </form>
+{{/main_content}}

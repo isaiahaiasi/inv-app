@@ -1,6 +1,14 @@
+const mongoose = require("mongoose");
+const { body, validationResult } = require("express-validator");
+
 const Product = require("../models/product");
 const Category = require("../models/category");
-const mongoose = require("mongoose");
+
+const validateAndSanitize = [
+  body("name").trim().isLength({ min: 1, max: 100 }).escape(),
+  body("description").trim().isLength({ min: 1, max: 3000 }).escape(),
+  // TODO: complete the rest of the validation
+];
 
 exports.index = (req, res, next) => {
   // get the products
@@ -47,12 +55,24 @@ exports.productDetail = (req, res, next) => {
 };
 
 exports.getCreateProduct = (req, res, next) => {
-  res.send("GET CREATE PRODUCT NOT YET IMPLEMENTED.");
+  Category.find({})
+    .sort("name")
+    .exec()
+    .then((categories) => {
+      res.render("product_form", {
+        title: "Create Product",
+        categories,
+      });
+    })
+    .catch((err) => next(err));
 };
 
-exports.postCreateProduct = (req, res, next) => {
-  res.send("POST CREATE PRODUCT NOT YET IMPLEMENTED.");
-};
+exports.postCreateProduct = [
+  ...validateAndSanitize,
+  (req, res, next) => {
+    res.type("json").send(JSON.stringify(req.body, null, 2) + "\n");
+  },
+];
 
 exports.getDeleteProduct = (req, res, next) => {
   res.send("GET DELETE PRODUCT NOT YET IMPLEMENTED.");
