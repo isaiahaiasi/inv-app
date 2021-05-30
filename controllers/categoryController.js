@@ -119,7 +119,7 @@ exports.postDeleteCategory = (req, res, next) => {
         });
       } else {
         // delete!!!
-        Category.findByIdAndRemove(id, function (err) {
+        Category.findByIdAndRemove(id, (err) => {
           if (err) {
             return next(err);
           }
@@ -135,9 +135,66 @@ exports.postDeleteCategory = (req, res, next) => {
 };
 
 exports.getUpdateCategory = (req, res, next) => {
-  res.send("CATEGORY-UPDATE-GET NOT YET IMPLEMENTED");
+  // get category
+  // render category form and give it category
+  const id = mongoose.Types.ObjectId(req.params.id);
+  Category.findById(id)
+    .exec()
+    .then((category) => {
+      res.render("category_form", {
+        title: `Update Category ${category.name}`,
+        category,
+      });
+    })
+    .catch((err) => {
+      next(err);
+    });
 };
 
-exports.postUpdateCategory = (req, res, next) => {
-  res.send("CATEGORY-UPDATE-POST NOT YET IMPLEMENTED");
-};
+// validate & sanitize
+// make new genre
+// if new genre already exists, just redirect
+// otherwise, update the current record
+exports.postUpdateCategory = [
+  ...validateAndSanitize,
+  (req, res, next) => {
+    // extract errors
+    const errors = validationResult(req);
+
+    const id = mongoose.Types.ObjectId(req.params.id);
+
+    const category = new Category({ name: req.body.name, _id: id });
+
+    if (errors.length > 0) {
+      res.render("category_form", {
+        title: `Update Category ${category.name}`,
+        category,
+        errors: errors.array(),
+      });
+    }
+
+    // Validation & sanitization passed
+    // Make sure there isn't already a category with the same name
+    Category.findOne({ name: req.body.name })
+      .exec()
+      .then((match) => {
+        if (match) {
+          // There's already a category with this name, so just link there
+          res.redirect(`/${INV_URL_NAME}/category/${match._id}`);
+          return;
+        }
+
+        // Update!
+        Category.findByIdAndUpdate(id, category, {}, (err, theCategory) => {
+          if (err) {
+            return next(err);
+          }
+
+          res.redirect(theCategory.url);
+        });
+      })
+      .catch((err) => {
+        next(err);
+      });
+  },
+];

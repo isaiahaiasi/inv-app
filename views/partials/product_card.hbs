@@ -4,17 +4,18 @@
   </a>
 </h3>
 <dl>
-  <div class="flex gap-1 items-start">
+  <div class="flex gap-1">
     <dt class="text-xl">price:</dt>
-    <dd>{{product.priceFormatted}}</dd>
+    <dd class="self-end">{{product.priceFormatted}}</dd>
   </div>
   {{#if product.category.name}}
-    <div class="flex gap-1 items-start">
+    <div class="flex gap-1">
       <dt class="text-xl">category:</dt>
-      <dd>{{product.category.name}}</dd>
+      <dd class="self-end">{{product.category.name}}</dd>
     </div>
   {{/if}}
 </dl>
+{{! TODO: different display when OUT OF STOCK }}
 {{#if product.isLowStock}}
   <p class="text-yellow-400">ALMOST OUT!</p>
 {{/if}}

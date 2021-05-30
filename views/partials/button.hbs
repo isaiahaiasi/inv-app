@@ -1,5 +1,9 @@
 <button 
-  class="border-black rounded-md bg-green-600 p-2" 
+  class={{#if warn}}
+    "border-black rounded-md bg-red-600 p-2"
+    {{else}}
+    "border-black rounded-md bg-green-600 p-2"
+    {{/if}}
   type={{#if type}} {{type}} {{else}} "button" {{/if}}
 >
   {{> @partial-block}}

@@ -1,13 +1,13 @@
 {{#> main_content }}
-    <h1 class="block text-6xl leading-normal">{{title}}</h1>
-    <section class="leading-loose">
-      <ul class="flex flex-col">
-        {{#each products}}
-          <li>
-            {{> product_card product=this}}
-            <hr>
-          </li>
-        {{/each}}
-      </ul>
-    </section>
+  <h1 class="block text-6xl leading-normal">{{title}}</h1>
+  <section class="leading-loose">
+    <ul class="flex flex-col">
+      {{#each products}}
+        <li>
+          {{> product_card product=this}}
+          <hr>
+        </li>
+      {{/each}}
+    </ul>
+  </section>
 {{/main_content}}

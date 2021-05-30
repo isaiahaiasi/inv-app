@@ -9,9 +9,10 @@
         id="name" 
         name="name" 
         required="true"
-        value={{#if product}} {{product.name}} {{else}} "" {{/if}}
+        value={{#if category}} {{category.name}} {{else}} "" {{/if}}
         >
     </div>
     {{#> button type="submit"}}Submit{{/button}}
   </form>
+  {{!-- TODO: list errors! --}}
 {{/main_content}}
