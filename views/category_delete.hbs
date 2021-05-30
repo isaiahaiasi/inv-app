@@ -1,5 +1,5 @@
 {{#> main_content}}
-  <h1 class="text-6xl">Delete {{category.name}}</h1>
+  <h1 class="text-6xl">Delete "{{category.name}}"?</h1>
   {{#if products}}
   {{!-- There are products referencing this category, so can't delete --}}
   <p>Can't delete category while there are products listed under it.</p>
@@ -14,6 +14,14 @@
   {{!-- No products reference this category; can proceed with delete --}}
     <p>Are you sure you want to delete the {{category.name}} category?</p>
     <form method="POST" action="">
+      {{!-- invisible "input" to send id in req.body.id --}}
+      <input 
+        id="categoryid" 
+        name="categoryid" 
+        type="hidden" 
+        required="true" 
+        value={{category._id}}
+      >
       {{#> button type="submit"}}Delete Item{{/button}}
     </form>
   {{/if}}

@@ -3,6 +3,7 @@ const { body, validationResult } = require("express-validator");
 
 const Category = require("../models/category");
 const Product = require("../models/product");
+const { INV_URL_NAME } = require("../consts");
 
 // same validation for create & update
 const validateAndSanitize = [body("name").trim().isLength({ min: 1 }).escape()];
@@ -102,7 +103,35 @@ exports.getDeleteCategory = (req, res, next) => {
 };
 
 exports.postDeleteCategory = (req, res, next) => {
-  res.send("CATEGORY-DELETE-POST NOT YET IMPLEMENTED");
+  const id = mongoose.Types.ObjectId(req.body.categoryid);
+  // get category, associated products
+  Promise.all([
+    Category.findById(id).exec(),
+    Product.find({ category: id }).exec(),
+  ])
+    .then(([category, products]) => {
+      if (products.length > 0) {
+        // there are still, somehow, associated products, render delete path
+        res.render("category_delete", {
+          title: `Delete Category ${category.name}`,
+          category,
+          products,
+        });
+      } else {
+        // delete!!!
+        Category.findByIdAndRemove(id, function (err) {
+          if (err) {
+            return next(err);
+          }
+
+          res.redirect(`/${INV_URL_NAME}/categories`);
+        });
+      }
+    })
+    // if not, delete & send back to categories
+    .catch((err) => {
+      next(err);
+    });
 };
 
 exports.getUpdateCategory = (req, res, next) => {
