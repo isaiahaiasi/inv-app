@@ -6,7 +6,10 @@ const Product = require("../models/product");
 const { INV_URL_NAME } = require("../consts");
 
 // same validation for create & update
-const validateAndSanitize = [body("name").trim().isLength({ min: 1 }).escape()];
+const validateAndSanitize = [
+  body("name").trim().isLength({ min: 3, max: 100 }).escape(),
+  body("description").trim().isLength({ min: 3, max: 3000 }).escape(),
+];
 
 exports.categoryList = (req, res, next) => {
   Category.find({})

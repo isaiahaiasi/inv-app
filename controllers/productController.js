@@ -5,9 +5,11 @@ const Product = require("../models/product");
 const Category = require("../models/category");
 
 const validateAndSanitize = [
-  body("name").trim().isLength({ min: 1, max: 100 }).escape(),
-  body("description").trim().isLength({ min: 1, max: 3000 }).escape(),
-  // TODO: complete the rest of the validation
+  body("name").trim().isLength({ min: 3, max: 100 }).escape(),
+  body("description").trim().isLength({ min: 3, max: 3000 }).escape(),
+  body("price").trim().isNumeric().escape(),
+  body("stock").trim().isNumeric().escape(),
+  body("category").trim().isUUID().escape(),
 ];
 
 exports.index = (req, res, next) => {
@@ -70,7 +72,55 @@ exports.getCreateProduct = (req, res, next) => {
 exports.postCreateProduct = [
   ...validateAndSanitize,
   (req, res, next) => {
-    res.type("json").send(JSON.stringify(req.body, null, 2) + "\n");
+    Promise.all([
+      Category.find({}).exec(),
+      Category.findById(req.body.category).exec(), // ensure selected category exists
+      Product.find({ name: req.body.name }).exec(), // ensure there isn't already a product with this name
+    ])
+      .then(([categories, category, matchedName]) => {
+        const errors = validationResult(req).array();
+
+        const product = new Product({
+          ...req.body,
+          category: category ?? categories[0],
+        });
+
+        // Only partial error API
+        if (!category) {
+          errors.push({
+            msg: "Category was not valid",
+            param: "category",
+            value: req.body.category,
+            location: "body",
+          });
+        }
+
+        if (matchedName) {
+          errors.push({
+            msg: "Product name cannot already exist",
+            param: "name",
+            value: req.body.name,
+            location: "body",
+          });
+        }
+
+        if (!errors.length > 0) {
+          res.render("product_form", {
+            title: "Create Product",
+            categories,
+            product,
+            errors: errors,
+          });
+          return;
+        }
+
+        // ALL ERROR CHECKING PASSED! SAVE PRODUCT & REDIRECT TO ITS PAGE
+        product
+          .save()
+          .then(() => res.redirect(product.url))
+          .catch((err) => next(err));
+      })
+      .catch((err) => next(err));
   },
 ];
 
@@ -79,6 +129,7 @@ exports.getDeleteProduct = (req, res, next) => {
 };
 
 exports.postDeleteProduct = (req, res, next) => {
+  //res.type("json").send(JSON.stringify(req.body, null, 2) + "\n");
   res.send("POST DELETE PRODUCT NOT YET IMPLEMENTED.");
 };
 
@@ -87,5 +138,6 @@ exports.getUpdateProduct = (req, res, next) => {
 };
 
 exports.postUpdateProduct = (req, res, next) => {
+  //res.type("json").send(JSON.stringify(req.body, null, 2) + "\n");
   res.send("POST UPDATE PRODUCT NOT YET IMPLEMENTED.");
 };
