@@ -18,4 +18,10 @@
       <dd>{{product.stock}}</dd>
     </div>
   </dl>
+  <a href={{link product.url "/update"}}>
+    {{#> button}} Update product {{/button}}
+  </a>
+  <a href={{link product.url "/delete"}}>
+    {{#> button warn=true}} Delete product {{/button}}
+  </a>
 {{/main_content}}

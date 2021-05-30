@@ -45,3 +45,27 @@ exports.productDetail = (req, res, next) => {
       next(err);
     });
 };
+
+exports.getCreateProduct = (req, res, next) => {
+  res.send("GET CREATE PRODUCT NOT YET IMPLEMENTED.");
+};
+
+exports.postCreateProduct = (req, res, next) => {
+  res.send("POST CREATE PRODUCT NOT YET IMPLEMENTED.");
+};
+
+exports.getDeleteProduct = (req, res, next) => {
+  res.send("GET DELETE PRODUCT NOT YET IMPLEMENTED.");
+};
+
+exports.postDeleteProduct = (req, res, next) => {
+  res.send("POST DELETE PRODUCT NOT YET IMPLEMENTED.");
+};
+
+exports.getUpdateProduct = (req, res, next) => {
+  res.send("GET UPDATE PRODUCT NOT YET IMPLEMENTED.");
+};
+
+exports.postUpdateProduct = (req, res, next) => {
+  res.send("POST UPDATE PRODUCT NOT YET IMPLEMENTED.");
+};

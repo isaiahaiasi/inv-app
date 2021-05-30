@@ -30,7 +30,7 @@ const hbsutils = require("hbs-utils")(hbs);
 hbsutils.registerWatchedPartials(__dirname + "/views/partials");
 
 // register necessary helper functions for view engine
-hbs.registerHelper("link", require("./views/helpers").link);
+hbs.registerHelper("link", require("./views/helpers/hbs-utility-helpers").link);
 
 app.set("views", path.join(__dirname, "views"));
 app.set("view engine", "hbs");
