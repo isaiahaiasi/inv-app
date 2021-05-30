@@ -1,0 +1,17 @@
+{{#> main_content}}
+  <form method="POST" action="" class="m-0">
+    <div class="pb-4">
+      <label for="name">Category name:</label>
+      <input 
+        class="rounded-sm pr-2 pl-2 text-gray-900" 
+        type="text" 
+        placeholder="Attire, Firearms, etc." 
+        id="name" 
+        name="name" 
+        required="true"
+        value={{#if product}} {{product.name}} {{else}} "" {{/if}}
+        >
+    </div>
+    {{#> button type="submit"}}Submit{{/button}}
+  </form>
+{{/main_content}}

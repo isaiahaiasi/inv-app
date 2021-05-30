@@ -32,3 +32,8 @@ exports.categoryDetail = (req, res, next) => {
       next(err);
     });
 };
+
+exports.createCategory = (req, res) => {
+  console.log("hello world");
+  res.render("category_form", { title: "Add Category" });
+};
