@@ -1,18 +1,16 @@
-<div class="flex justify-center p-2 w-100">
-  <main class="bg-gray-700 w-full max-w-prose mx-auto rounded-lg p-5 shadow-lg">
-    <h1 class="block text-8xl leading-normal">{{title}}</h1>
-    <section class="leading-loose">
-      <p>Welcome to {{title}}</p>
-      <p>There are
-        {{productCount}}
-        products in stock at the moment.
-        <a class="underline" href="/inv/products">View Products</a>
-      </p>
-      <p>There are
-        {{categoryCount}}
-        categories to choose from.
-        <a class="underline" href="/inv/categories">View Categories</a>
-      </p>
-    </section>
-  </main>
-</div>
+{{#> main_content}}
+  <h1 class="block text-8xl leading-normal">{{title}}</h1>
+  <section class="leading-loose">
+    <p>Welcome to {{title}}</p>
+    <p>There are
+      {{productCount}}
+      products in stock at the moment.
+      <a class="underline" href="/inv/products">View Products</a>
+    </p>
+    <p>There are
+      {{categoryCount}}
+      categories to choose from.
+      <a class="underline" href="/inv/categories">View Categories</a>
+    </p>
+  </section>
+{{/main_content}}

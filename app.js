@@ -23,6 +23,9 @@ const db = mongoose.connection;
 db.on("error", console.error.bind(console, "MongoDB connection error:"));
 
 // view engine setup
+const hbs = require("hbs");
+hbs.registerPartials(__dirname + "/views/partials");
+
 app.set("views", path.join(__dirname, "views"));
 app.set("view engine", "hbs");
 

@@ -1,36 +1,13 @@
-<div class="flex justify-center p-2 w-100">
-  <main class="bg-gray-700 w-full max-w-prose mx-auto rounded-lg p-5 shadow-lg">
+{{#> main_content }}
     <h1 class="block text-6xl leading-normal">{{title}}</h1>
     <section class="leading-loose">
       <ul class="flex flex-col">
         {{#each products}}
-          {{> productCard}}
+          <li>
+            {{> product_card product=this}}
+            <hr>
+          </li>
         {{/each}}
       </ul>
     </section>
-  </main>
-</div>
-
-{{#* inline "productCard"}}
-  <li>
-    <h3 class="text-4xl">
-      <a href={{this.url}}>
-      {{this.name}}
-      </a>
-    </h3>
-    <dl class="flex flex-col">
-      <div>
-        <dt class="text-xl">category</dt>
-        <dd>{{this.category.name}}</dd>
-      </div>
-      <div>
-        <dd class="text-xl">price:</dd>
-        <dd>{{this.priceFormatted}}</dd>
-      </div>
-    </dl>
-    {{#if this.isLowStock }}
-      <p class='text-yellow-400'>ALMOST OUT!</p>
-    {{/if}}
-    <hr>
-  </li>
-{{/inline}}
+{{/main_content}}

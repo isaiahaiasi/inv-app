@@ -1,0 +1,20 @@
+<h3 class="text-4xl">
+  <a href={{product.url}}>
+    {{product.name}}
+  </a>
+</h3>
+<dl class="flex flex-col">
+  <div class="flex gap-1">
+    <dd class="text-xl">price:</dd>
+    <dd>{{product.priceFormatted}}</dd>
+  </div>
+  {{#if product.category.name}}
+    <div class="flex gap-1">
+      <dt class="text-xl">category:</dt>
+      <dd>{{product.category.name}}</dd>
+    </div>
+  {{/if}}
+</dl>
+{{#if product.isLowStock}}
+  <p class="text-yellow-400">ALMOST OUT!</p>
+{{/if}}
