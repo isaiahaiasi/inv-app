@@ -22,10 +22,15 @@ mongoose.connect(process.env.MONGODB_URI, {
 const db = mongoose.connection;
 db.on("error", console.error.bind(console, "MongoDB connection error:"));
 
-// view engine setup
+// VIEW ENGINE SETUP
 const hbs = require("hbs");
+
+// watch changes in partials so changes are reflected w/o restarting server
 const hbsutils = require("hbs-utils")(hbs);
 hbsutils.registerWatchedPartials(__dirname + "/views/partials");
+
+// register necessary helper functions for view engine
+hbs.registerHelper("link", require("./views/helpers").link);
 
 app.set("views", path.join(__dirname, "views"));
 app.set("view engine", "hbs");

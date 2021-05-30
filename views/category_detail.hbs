@@ -11,4 +11,7 @@
   {{else}}
     <p>There are no items in this category.</p>
   {{/if}}
+  <a href={{link category.url "/delete"}}>
+    {{#> button}} Delete category {{/button}}
+  </a>
 {{/main_content}}

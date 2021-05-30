@@ -79,3 +79,36 @@ exports.postCreateCategory = [
       .catch((err) => next(err));
   },
 ];
+
+exports.getDeleteCategory = (req, res, next) => {
+  // get category & all products of that category
+  // render with those params
+  const id = mongoose.Types.ObjectId(req.params.id);
+
+  Promise.all([
+    Category.findById(id).exec(),
+    Product.find({ category: id }).exec(),
+  ])
+    .then(([category, products]) => {
+      res.render("category_delete", {
+        title: `Delete Category ${category.name}`,
+        category,
+        products,
+      });
+    })
+    .catch((err) => {
+      next(err);
+    });
+};
+
+exports.postDeleteCategory = (req, res, next) => {
+  res.send("CATEGORY-DELETE-POST NOT YET IMPLEMENTED");
+};
+
+exports.getUpdateCategory = (req, res, next) => {
+  res.send("CATEGORY-UPDATE-GET NOT YET IMPLEMENTED");
+};
+
+exports.postUpdateCategory = (req, res, next) => {
+  res.send("CATEGORY-UPDATE-POST NOT YET IMPLEMENTED");
+};

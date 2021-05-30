@@ -1,0 +1,20 @@
+{{#> main_content}}
+  <h1 class="text-6xl">Delete {{category.name}}</h1>
+  {{#if products}}
+  {{!-- There are products referencing this category, so can't delete --}}
+  <p>Can't delete category while there are products listed under it.</p>
+  <p>The following products are preventing the category from being deleted:</p>
+  {{#each products}}
+    {{> product_card product=this}}
+  {{/each}}
+  <a href={{category.url}}>
+    {{#> button}}Go back{{/button}}
+  </a>
+  {{else}}
+  {{!-- No products reference this category; can proceed with delete --}}
+    <p>Are you sure you want to delete the {{category.name}} category?</p>
+    <form method="POST" action="">
+      {{#> button type="submit"}}Delete Item{{/button}}
+    </form>
+  {{/if}}
+{{/main_content}}
