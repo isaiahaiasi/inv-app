@@ -3,9 +3,9 @@
     {{product.name}}
   </a>
 </h3>
-<dl class="flex flex-col">
-  <div class="flex gap-1">
-    <dd class="text-xl">price:</dd>
+<dl class="flex flex-row">
+  <div class="flex gap-1 items-end">
+    <dt class="text-xl">price:</dt>
     <dd>{{product.priceFormatted}}</dd>
   </div>
   {{#if product.category.name}}
