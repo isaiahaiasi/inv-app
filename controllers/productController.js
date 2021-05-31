@@ -10,7 +10,7 @@ const validateAndSanitize = [
   body("description").trim().isLength({ min: 3, max: 3000 }).escape(),
   body("price").trim().isNumeric().escape(),
   body("stock").trim().isNumeric().escape(),
-  body("category").trim().isUUID().escape(),
+  //body("category").trim().isUUID().escape(),
 ];
 
 exports.index = (req, res, next) => {
@@ -194,7 +194,77 @@ exports.getUpdateProduct = (req, res, next) => {
     .catch((err) => next(err));
 };
 
-exports.postUpdateProduct = (req, res, next) => {
-  //res.type("json").send(JSON.stringify(req.body, null, 2) + "\n");
-  res.send("POST UPDATE PRODUCT NOT YET IMPLEMENTED.");
-};
+exports.postUpdateProduct = [
+  ...validateAndSanitize,
+  (req, res, next) => {
+    const id = mongoose.Types.ObjectId(req.params.id);
+
+    Promise.all([
+      Product.find({ name: req.body.name }).exec(),
+      Category.findById(mongoose.Types.ObjectId(req.body.category)).exec(),
+      Product.findById(id).exec(),
+    ])
+      .then(([matchedProducts, category, oldProduct]) => {
+        const { name, description, price, stock } = req.body;
+        const product = new Product({
+          name,
+          description,
+          price,
+          stock,
+          category,
+          _id: id,
+        });
+
+        console.log(matchedProducts);
+
+        const errors = validationResult(req).array();
+
+        if (matchedProducts.length > 0) {
+          // given name is invalid (already exists on a different product)
+          errors.push({
+            msg: "Product name is already in use. Cannot use an existing product name",
+            param: "name",
+            value: req.body.name,
+            location: "body",
+          });
+        }
+
+        if (!category) {
+          // given category doesn't exist
+          errors.push({
+            msg: "Selected category could not be found. Please select a valid category",
+            param: "category",
+            value: req.body.category,
+            location: "body",
+          });
+        }
+
+        // send back with any validation errors
+        if (errors.length > 0) {
+          // first, get list of categories to populate form
+          Category.find({})
+            .exec()
+            .then((categories) => {
+              res.render("product_form", {
+                title: `Update Product ${oldProduct.name}`,
+                product,
+                categories,
+                errors,
+              });
+            })
+            .catch((err) => next(err));
+          return;
+        }
+
+        // all validation passed
+        Product.findByIdAndUpdate(id, product)
+          .exec()
+          .then((updatedProduct) => {
+            // TODO? Check if updatedProduct exists, if not re-render form?
+            res.redirect(updatedProduct.url);
+          })
+          .catch((err) => next(err));
+      })
+      .catch((err) => next(err));
+  },
+];

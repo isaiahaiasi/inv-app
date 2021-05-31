@@ -9,7 +9,7 @@
         id="name" 
         name="name" 
         required="true"
-        value={{#if category}} {{category.name}} {{else}} "" {{/if}}
+        value="{{#if category}}{{category.name}}{{/if}}"
         >
     </div>
     {{#> button type="submit"}}Submit{{/button}}
