@@ -1,5 +1,6 @@
 const mongoose = require("mongoose");
 const { body, validationResult } = require("express-validator");
+const { INV_URL_NAME } = require("../consts");
 
 const Product = require("../models/product");
 const Category = require("../models/category");
@@ -125,13 +126,54 @@ exports.postCreateProduct = [
 ];
 
 exports.getDeleteProduct = (req, res, next) => {
-  res.send("GET DELETE PRODUCT NOT YET IMPLEMENTED.");
+  // no dependencies, so just make sure the product exists then ask to confirm
+  const id = mongoose.Types.ObjectId(req.params.id);
+  Product.findById(id)
+    .exec()
+    .then((product) => {
+      if (product == null) {
+        const err = new Error("Product not found!");
+        err.status = 404;
+        return next(err);
+      }
+
+      res.render("product_delete", {
+        title: `Delete Product ${product.name}`,
+        product,
+      });
+    })
+    .catch((err) => next(err));
 };
 
-exports.postDeleteProduct = (req, res, next) => {
-  //res.type("json").send(JSON.stringify(req.body, null, 2) + "\n");
-  res.send("POST DELETE PRODUCT NOT YET IMPLEMENTED.");
-};
+exports.postDeleteProduct = [
+  body("productid").trim().escape(),
+  (req, res, next) => {
+    const errors = validationResult(req);
+
+    if (!errors.isEmpty()) {
+      // this should never fail. If it does, throw an error
+      const err = new Error("Product not found!");
+      err.status = 404;
+      return next(err);
+    }
+
+    const id = mongoose.Types.ObjectId(req.body.productid);
+    console.log(id);
+    Product.findByIdAndRemove(id)
+      .exec()
+      .then((product) => {
+        // this is probably superfluous
+        if (product == null) {
+          const err = new Error("Product not found!");
+          err.status = 404;
+          return next(err);
+        }
+
+        res.redirect(`/${INV_URL_NAME}/products`);
+      })
+      .catch((err) => next(err));
+  },
+];
 
 exports.getUpdateProduct = (req, res, next) => {
   res.send("GET UPDATE PRODUCT NOT YET IMPLEMENTED.");

@@ -8,7 +8,8 @@ const { INV_URL_NAME } = require("../consts");
 // same validation for create & update
 const validateAndSanitize = [
   body("name").trim().isLength({ min: 3, max: 100 }).escape(),
-  body("description").trim().isLength({ min: 3, max: 3000 }).escape(),
+  // TODO: implement description in form & create/update routes
+  // body("description").trim().isLength({ min: 3, max: 3000 }).escape(),
 ];
 
 exports.categoryList = (req, res, next) => {
@@ -121,17 +122,15 @@ exports.postDeleteCategory = (req, res, next) => {
           products,
         });
       } else {
-        // delete!!!
-        Category.findByIdAndRemove(id, (err) => {
-          if (err) {
-            return next(err);
-          }
-
-          res.redirect(`/${INV_URL_NAME}/categories`);
-        });
+        // delete & send back to categories
+        Category.findByIdAndRemove(id)
+          .exec()
+          .then(() => {
+            res.redirect(`/${INV_URL_NAME}/categories`);
+          })
+          .catch((err) => next(err));
       }
     })
-    // if not, delete & send back to categories
     .catch((err) => {
       next(err);
     });

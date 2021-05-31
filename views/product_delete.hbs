@@ -1,0 +1,20 @@
+{{#> main_content}}
+  <h1 class="pb-2 text-6xl">Delete "{{product.name}}"?</h1>
+  <p>This action cannot be undone.</p>
+  <hr class="pb-2">
+  <div class="flex gap-2">
+    <form action="" method="POST">
+      <input 
+          id="productid" 
+          name="productid" 
+          type="hidden" 
+          required="true" 
+          value={{product._id}}
+      >
+      {{#> button warn=true type="submit"}} Delete {{/button}}
+    </form>
+    <a href={{product.url}}>
+      {{#> button }} Back {{/button}}
+    </a>
+  </div>
+{{/main_content}}
