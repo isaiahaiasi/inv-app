@@ -176,7 +176,22 @@ exports.postDeleteProduct = [
 ];
 
 exports.getUpdateProduct = (req, res, next) => {
-  res.send("GET UPDATE PRODUCT NOT YET IMPLEMENTED.");
+  const id = mongoose.Types.ObjectId(req.params.id);
+  Promise.all([Product.findById(id).exec(), Category.find({}).exec()])
+    .then(([product, categories]) => {
+      if (product == null) {
+        const err = new Error("Product not found!");
+        err.status = 404;
+        return next(err);
+      }
+
+      res.render("product_form", {
+        title: `Update Product ${product.name}`,
+        product,
+        categories,
+      });
+    })
+    .catch((err) => next(err));
 };
 
 exports.postUpdateProduct = (req, res, next) => {
