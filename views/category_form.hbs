@@ -14,5 +14,11 @@
     </div>
     {{#> button type="submit"}}Submit{{/button}}
   </form>
-  {{!-- TODO: list errors! --}}
+  {{#if errors}}
+    <ul>
+      {{#each errors}}
+      <li>{{this.msg}} - {{this.param}}:{{this.value}}</li>
+      {{/each}}
+    </ul>
+  {{/if}}
 {{/main_content}}

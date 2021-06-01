@@ -160,7 +160,7 @@ async.series(
     if (err) {
       console.log("FINAL ERR: " + err);
     } else {
-      console.log("final products: " + products);
+      console.log("final products: " + results);
     }
     // All done, disconnect from database
     mongoose.connection.close();
