@@ -9,7 +9,7 @@
     "start": "node ./bin/www",
     "startmon": "nodemon ./bin/www",
     "dev": "DEBUG=inv-app:* npm run startmon",
-    "tailwind:css": "postcss public/styles/tailwind.css -o public/styles/style.css"
+    "build:css": "postcss public/styles/tailwind.css -o public/styles/style.css"
   },
   "dependencies": {
     "async": "^3.2.0",
