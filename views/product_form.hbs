@@ -9,7 +9,6 @@
         name="name" 
         type="text" 
         required="true"
-        {{!-- value={{#if product}}{{product.name}}{{else}}""{{/if}} --}}
         value="{{#if product}}{{product.name}}{{/if}}"
         placeholder="Pebble, Blunderbuss, etc."
       >
@@ -25,7 +24,6 @@
       >{{#if product}}{{product.description}}{{/if}}</textarea>
     </div>
     <div class="p-2 flex flex-col">
-      {{!-- Might need a helper function to default to current category for update --}}
       <label for="category">Category: </label>
       <select 
         class="rounded-sm pr-2 pl-2 text-gray-900"
@@ -64,9 +62,11 @@
         {{#if product}}value={{product.stock}}{{/if}}
       >
     </div>
-    <div class="pl-2 pt-2">
-    {{#> button type="submit"}}Submit{{/button}}
 
+    {{> adminpw }}
+
+    <div class="pl-2 pt-2">
+      {{#> button type="submit"}}Submit{{/button}}
     </div>
   </form>
   {{#if errors}}

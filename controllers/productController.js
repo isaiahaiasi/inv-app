@@ -86,30 +86,40 @@ exports.postCreateProduct = [
         });
 
         // Only partial error API
-        if (!category) {
+        if (req.body.adminpw !== process.env.ADMIN_PW) {
+          // password is incorrect. Don't bother with further error checking
+          res.status = 401;
           errors.push({
-            msg: "Category was not valid",
-            param: "category",
-            value: req.body.category,
+            msg: "Invalid password",
+            param: "adminpw",
             location: "body",
           });
+        } else {
+          if (!category) {
+            errors.push({
+              msg: "Category was not valid",
+              param: "category",
+              value: req.body.category,
+              location: "body",
+            });
+          }
+
+          if (matchedName && matchedName.length > 0) {
+            errors.push({
+              msg: "Product name cannot already exist",
+              param: "name",
+              value: req.body.name,
+              location: "body",
+            });
+          }
         }
 
-        if (matchedName) {
-          errors.push({
-            msg: "Product name cannot already exist",
-            param: "name",
-            value: req.body.name,
-            location: "body",
-          });
-        }
-
-        if (!errors.length > 0) {
+        if (errors.length > 0) {
           res.render("product_form", {
             title: "Create Product",
             categories,
             product,
-            errors: errors,
+            errors,
           });
           return;
         }
@@ -147,10 +157,19 @@ exports.getDeleteProduct = (req, res, next) => {
 exports.postDeleteProduct = [
   body("productid").trim().escape(),
   (req, res, next) => {
-    const errors = validationResult(req);
+    const errors = validationResult(req).array();
 
-    if (!errors.isEmpty()) {
-      // this should never fail. If it does, throw an error
+    if (req.body.adminpw !== process.env.ADMIN_PW) {
+      res.status = 401;
+      errors.push({
+        msg: "Invalid password",
+        param: "adminpw",
+        location: "body",
+      });
+    }
+
+    // TODO: this doesn't really make sense anymore
+    if (errors.length > 0) {
       const err = new Error("Product not found!");
       err.status = 404;
       return next(err);
@@ -215,24 +234,33 @@ exports.postUpdateProduct = [
 
         const errors = validationResult(req).array();
 
-        if (matchedProducts.length > 0) {
-          // given name is invalid (already exists on a different product)
+        if (req.body.adminpw !== process.env.ADMIN_PW) {
+          res.status = 401;
           errors.push({
-            msg: "Product name is already in use. Cannot use an existing product name",
-            param: "name",
-            value: req.body.name,
+            msg: "Invalid password",
+            param: "adminpw",
             location: "body",
           });
-        }
+        } else {
+          if (matchedProducts.length > 0) {
+            // given name is invalid (already exists on a different product)
+            errors.push({
+              msg: "Product name is already in use. Cannot use an existing product name",
+              param: "name",
+              value: req.body.name,
+              location: "body",
+            });
+          }
 
-        if (!category) {
-          // given category doesn't exist
-          errors.push({
-            msg: "Selected category could not be found. Please select a valid category",
-            param: "category",
-            value: req.body.category,
-            location: "body",
-          });
+          if (!category) {
+            // given category doesn't exist
+            errors.push({
+              msg: "Selected category could not be found. Please select a valid category",
+              param: "category",
+              value: req.body.category,
+              location: "body",
+            });
+          }
         }
 
         // send back with any validation errors

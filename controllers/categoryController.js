@@ -52,15 +52,27 @@ exports.postCreateCategory = [
   ...validateAndSanitize,
   (req, res, next) => {
     // extract validation errors
-    const errors = validationResult(req);
+    let errors = validationResult(req).array();
 
     const category = new Category({ name: req.body.name });
 
-    if (!errors.isEmpty()) {
+    // if pw wrong, overwrite any other errors with unauthorized error
+    if (req.body.adminpw !== process.env.ADMIN_PW) {
+      res.status = 401;
+      errors = [
+        {
+          msg: "Invalid password",
+          param: "adminpw",
+          location: "body",
+        },
+      ];
+    }
+
+    if (errors.length > 0) {
       res.render("category_form", {
         title: "Create Category",
         category,
-        errors: errors.array(),
+        errors,
       });
       return;
     }
@@ -114,6 +126,12 @@ exports.postDeleteCategory = (req, res, next) => {
     Product.find({ category: id }).exec(),
   ])
     .then(([category, products]) => {
+      // unauthorized w/o correct pw
+      if (req.body.adminpw !== process.env.ADMIN_PW) {
+        const err = new Error("Invalid password");
+        return next(err);
+      }
+
       if (products.length > 0) {
         // there are still, somehow, associated products, render delete path
         res.render("category_delete", {
@@ -161,18 +179,30 @@ exports.postUpdateCategory = [
   ...validateAndSanitize,
   (req, res, next) => {
     // extract errors
-    const errors = validationResult(req);
+    let errors = validationResult(req).array();
 
     const id = mongoose.Types.ObjectId(req.params.id);
 
     const category = new Category({ name: req.body.name, _id: id });
 
+    if (req.body.adminpw !== process.env.ADMIN_PW) {
+      // res.status = 401;
+      errors = [
+        {
+          msg: "Invalid password",
+          param: "adminpw",
+          location: "body",
+        },
+      ];
+    }
+
     if (errors.length > 0) {
       res.render("category_form", {
         title: `Update Category ${category.name}`,
         category,
-        errors: errors.array(),
+        errors,
       });
+      return;
     }
 
     // Validation & sanitization passed

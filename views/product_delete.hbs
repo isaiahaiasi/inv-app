@@ -2,19 +2,24 @@
   <h1 class="pb-2 text-6xl">Delete "{{product.name}}"?</h1>
   <p>This action cannot be undone.</p>
   <hr class="pb-2">
-  <div class="flex gap-2">
     <form action="" method="POST">
-      <input 
-          id="productid" 
-          name="productid" 
-          type="hidden" 
-          required="true" 
-          value={{product._id}}
-      >
-      {{#> button warn=true type="submit"}} Delete {{/button}}
+      <div>
+        <input 
+            id="productid" 
+            name="productid" 
+            type="hidden" 
+            required="true" 
+            value={{product._id}}
+        >
+      </div>
+      {{> adminpw }}
+      <div class="flex flex-row gap-2 p-2 pb-0">
+        {{#> button warn=true type="submit"}} Delete {{/button}}
+
+        <a href={{product.url}}>
+          {{#> button }} Back {{/button}}
+        </a>
+      </div>
     </form>
-    <a href={{product.url}}>
-      {{#> button }} Back {{/button}}
-    </a>
   </div>
 {{/main_content}}

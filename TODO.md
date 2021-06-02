@@ -8,8 +8,12 @@
 - ~~Add 'READ' views~~
 - ~~Add forms & controllers for Category Create/Update/Delete~~
 - ~~Add forms & controllers for Product Create/Update/Delete~~
-- Deploy!
-- Password-protect create/update/delete POSTs
+- ~~Deploy!~~
+- ~~Password-protect create/update/delete POSTs~~
+- Check password & return unauthorized error IN CONSISTENT WAY
+
+  - (right now, sometimes it throws an error, sometimes it re-renders form w error message, sometimes it doesn't show correct error, etc., because all my _other_ error handling is also inconsistent)
+
 - Add image upload functionality (firebase cloud storage?)
 
 # (Lower Priority)
