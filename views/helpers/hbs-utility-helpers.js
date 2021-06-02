@@ -1,18 +1,23 @@
 const hbs = require("handlebars");
 
-const getSafeArgs = (...args) => args.map((arg) => hbs.escapeExpression(arg));
+const escapeAll = (...args) => args.map((arg) => hbs.escapeExpression(arg));
 
 exports.link = (...linkSegments) => {
   // final argument is metadata I need to splice out
   linkSegments.splice(linkSegments.length - 1, 1);
 
-  const escapedSegments = getSafeArgs(...linkSegments);
+  const escapedSegments = escapeAll(...linkSegments);
 
   return escapedSegments.join("");
 };
 
+exports.ifeq = function (a, b, options) {
+  const [safeA, safeB] = escapeAll(a, b);
+  return safeA === safeB ? options.fn(this) : options.inverse(this);
+};
+
 exports.tern = (conditionUnsafe, trueResultUnsafe, falseResultUnsafe) => {
-  const [condition, trueResult, falseResult] = getSafeArgs(
+  const [condition, trueResult, falseResult] = escapeAll(
     conditionUnsafe,
     trueResultUnsafe,
     falseResultUnsafe

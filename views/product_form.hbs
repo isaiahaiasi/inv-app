@@ -32,7 +32,13 @@
         id="category" name="category"
         >
         {{#each categories}}
-          <option value={{this._id}}>{{this.name}}</option>
+          <option value={{this._id}} 
+            {{#ifeq this._id ../product.category}} 
+              selected 
+            {{/ifeq}}
+          >
+            {{this.name}}
+          </option>
         {{/each}}
       </select>
     </div>

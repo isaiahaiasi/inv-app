@@ -38,6 +38,7 @@ hbsutils.registerWatchedPartials(__dirname + "/views/partials");
 
 // register necessary helper functions for view engine
 hbs.registerHelper("link", require("./views/helpers/hbs-utility-helpers").link);
+hbs.registerHelper("ifeq", require("./views/helpers/hbs-utility-helpers").ifeq);
 
 app.set("views", path.join(__dirname, "views"));
 app.set("view engine", "hbs");
