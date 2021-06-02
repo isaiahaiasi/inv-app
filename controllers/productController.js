@@ -6,10 +6,10 @@ const Product = require("../models/product");
 const Category = require("../models/category");
 
 const validateAndSanitize = [
-  body("name").trim().isLength({ min: 3, max: 100 }).escape(),
-  body("description").trim().isLength({ min: 3, max: 3000 }).escape(),
+  body("name").trim().isLength({ min: 3, max: 100 }),
+  body("description").trim().isLength({ min: 3, max: 3000 }),
   body("price").trim().isNumeric().escape(),
-  body("stock").trim().isNumeric().escape(),
+  body("stock").trim().isNumeric({ no_symbols: true }),
   //body("category").trim().isUUID().escape(),
 ];
 
@@ -46,7 +46,6 @@ exports.productDetail = (req, res, next) => {
     .populate("category")
     .exec()
     .then((product) => {
-      console.log(product);
       res.render("product_detail", {
         title: `${product.name} detail`,
         product,
@@ -158,7 +157,6 @@ exports.postDeleteProduct = [
     }
 
     const id = mongoose.Types.ObjectId(req.body.productid);
-    console.log(id);
     Product.findByIdAndRemove(id)
       .exec()
       .then((product) => {
@@ -200,7 +198,7 @@ exports.postUpdateProduct = [
     const id = mongoose.Types.ObjectId(req.params.id);
 
     Promise.all([
-      Product.find({ name: req.body.name }).exec(),
+      Product.find({ name: req.body.name, _id: { $ne: req.params.id } }).exec(),
       Category.findById(mongoose.Types.ObjectId(req.body.category)).exec(),
       Product.findById(id).exec(),
     ])
@@ -214,8 +212,6 @@ exports.postUpdateProduct = [
           category,
           _id: id,
         });
-
-        console.log(matchedProducts);
 
         const errors = validationResult(req).array();
 
