@@ -1,3 +1,6 @@
+// dotenv setup
+require("dotenv").config();
+
 var createError = require("http-errors");
 var express = require("express");
 var path = require("path");
@@ -6,8 +9,12 @@ var logger = require("morgan");
 const helmet = require("helmet");
 const compression = require("compression");
 
-// dotenv setup
-require("dotenv").config();
+//! cloudinary setup
+// const cloudinary = require("cloudinary").v2;
+
+// if (typeof process.env.CLOUDINARY_URL === "undefined") {
+//   console.warn("CLOUDINARY CONFIG IS UNDEFINED");
+// }
 
 // routes setup
 const indexRouter = require("./routes/index");
