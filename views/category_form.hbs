@@ -1,5 +1,5 @@
 {{#> main_content}}
-  <form method="POST" action="" class="m-0">
+  <form method="POST" action="" class="m-0" enctype="multipart/form-data">
     <div class="pb-4">
       <label for="name">Category name:</label>
       <input 
@@ -11,6 +11,15 @@
         required="true"
         value="{{#if category}}{{category.name}}{{/if}}"
         >
+    </div>
+    <div class="pb-4">
+      <label for="name">Category icon:</label>
+      <input
+        class="rounded-sm pr-2 pl-2 text-gray-900" 
+        type="file"
+        id="icon_upload"
+        name="icon_upload"
+      >
     </div>
     {{> adminpw }}
     {{#> button type="submit"}}Submit{{/button}}

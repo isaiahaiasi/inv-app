@@ -5,6 +5,8 @@ const Category = require("../models/category");
 const Product = require("../models/product");
 const { INV_URL_NAME } = require("../consts");
 
+const cloudinary = require("cloudinary").v2;
+
 // same validation for create & update
 const validateAndSanitize = [
   body("name").trim().isLength({ min: 3, max: 100 }).escape(),
@@ -67,6 +69,8 @@ exports.postCreateCategory = [
         },
       ];
     }
+
+    // TODO: HANDLE FILE UPLOAD, save url to new category
 
     if (errors.length > 0) {
       res.render("category_form", {
