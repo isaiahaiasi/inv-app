@@ -58,7 +58,7 @@ router.get("/", productController.index);
 //-----------------------
 router.get("/products", productController.productList);
 
-// "CREATE" ROUTES (must go b/f :id urls)
+// CREATE (must go b/f :id urls)
 router.get("/product/create", productController.getCreateProduct);
 router.post("/product/create", [
   // TODO: handle image upload for product via multer
@@ -66,11 +66,14 @@ router.post("/product/create", [
   productController.postCreateProduct,
 ]);
 
+// GET DETAILS
 router.get("/product/:id", productController.productDetail);
 
-// Operations on specific products (DELETE, UPDATE)
+// DELETE
 router.get("/product/:id/delete", productController.getDeleteProduct);
 router.post("/product/:id/delete", productController.postDeleteProduct);
+
+// UPDATE
 router.get("/product/:id/update", productController.getUpdateProduct);
 router.post("/product/:id/update", [
   // TODO: handle image upload for product via multer

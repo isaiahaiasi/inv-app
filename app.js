@@ -9,12 +9,11 @@ var logger = require("morgan");
 const helmet = require("helmet");
 const compression = require("compression");
 
-//! cloudinary setup
-// const cloudinary = require("cloudinary").v2;
-
-// if (typeof process.env.CLOUDINARY_URL === "undefined") {
-//   console.warn("CLOUDINARY CONFIG IS UNDEFINED");
-// }
+// confirm existence of cloudinary env keys
+// (don't need to explicitly call config() with CLOUDINARY_URL)
+if (typeof process.env.CLOUDINARY_URL === "undefined") {
+  console.warn("CLOUDINARY CONFIG IS UNDEFINED");
+}
 
 // routes setup
 const indexRouter = require("./routes/index");
@@ -23,7 +22,16 @@ const invRouter = require("./routes/inv");
 var app = express();
 
 // set secure http headers
-app.use(helmet());
+app.use(
+  helmet({
+    contentSecurityPolicy: {
+      directives: {
+        ...helmet.contentSecurityPolicy.getDefaultDirectives(),
+        "img-src": ["'self'", "res.cloudinary.com"],
+      },
+    },
+  })
+);
 
 // mongoose setup
 const mongoose = require("mongoose");

@@ -5,6 +5,7 @@ const Schema = mongoose.Schema;
 const CategorySchema = new Schema({
   name: { type: String, minLength: 3, maxLength: 100, required: true },
   description: { type: String, minLength: 3, maxLength: 3000 },
+  img_url: { type: String, maxLength: 2048 },
 });
 
 CategorySchema.virtual("url").get(function () {

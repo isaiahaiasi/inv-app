@@ -4,6 +4,7 @@ const { body, validationResult } = require("express-validator");
 const Category = require("../models/category");
 const Product = require("../models/product");
 const { INV_URL_NAME } = require("../consts");
+const { UPLOAD_PATH } = require("../rootdir");
 
 const cloudinary = require("cloudinary").v2;
 
@@ -70,8 +71,6 @@ exports.postCreateCategory = [
       ];
     }
 
-    // TODO: HANDLE FILE UPLOAD, save url to new category
-
     if (errors.length > 0) {
       res.render("category_form", {
         title: "Create Category",
@@ -86,16 +85,48 @@ exports.postCreateCategory = [
     Category.findOne({ name: req.body.name })
       .exec()
       .then((foundCategory) => {
+        // TODO: not sure how to handle this, but this isn't what I want
+        // (eg, what if other details are changed--it's very confusing)
         if (foundCategory) {
           res.redirect(foundCategory.url);
           return;
         }
 
         // no errors, data is valid, and category doesn't exist yet
-        category
-          .save()
-          .then(() => res.redirect(category.url))
-          .catch((err) => next(err));
+
+        // if there's image data, upload to cloudinary & save url to category
+        if (req.file?.filename) {
+          const imageLocation = UPLOAD_PATH + "/" + req.file.filename;
+
+          cloudinary.uploader
+            .upload(imageLocation, {
+              folder: "category",
+            })
+            .then((image) => {
+              console.log("image public_id: ", image.public_id);
+              console.log("image url: ", image.url);
+
+              // TODO: REMOVE FROM LOCAL STORAGE
+
+              // TODO: SAVE URL TO CATEGORY
+              category.img_url = image.url;
+              console.log("category.img_url" + category.img_url);
+              category
+                .save()
+                .then(() => res.redirect(category.url))
+                .catch((err) => next(err));
+            })
+            .catch((err) => {
+              // error in cloudinary upload
+              next(err);
+            });
+        } else {
+          // no image data, just save text fields
+          category
+            .save()
+            .then(() => res.redirect(category.url))
+            .catch((err) => next(err));
+        }
       })
       .catch((err) => next(err));
   },
