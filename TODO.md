@@ -14,7 +14,11 @@
 
   - (right now, sometimes it throws an error, sometimes it re-renders form w error message, sometimes it doesn't show correct error, etc., because all my _other_ error handling is also inconsistent)
 
-- Add image upload functionality (firebase cloud storage?)
+- Add image upload functionality
+  - `multer` to receive files from form and save locally
+  - `cloudinary` to upload local files to persistent storage
+  - add _optional_ image url field to Category and Product schemas
+  - save cloudinary url in associated document
 
 # (Lower Priority)
 
