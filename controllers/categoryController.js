@@ -60,7 +60,10 @@ exports.postCreateCategory = [
     // extract validation errors
     let errors = validationResult(req).array();
 
-    const category = new Category({ name: req.body.name });
+    const category = new Category({
+      name: req.body.name,
+      img: createDefaultImg(),
+    });
 
     // if pw wrong, overwrite any other errors with unauthorized error
     if (req.body.adminpw !== process.env.ADMIN_PW) {
@@ -183,6 +186,22 @@ exports.postDeleteCategory = (req, res, next) => {
         // delete & send back to categories
         Category.findByIdAndRemove(id)
           .exec()
+          .then((removedCategory) => {
+            console.log(
+              `removed ${removedCategory.name} (${removedCategory._id})`
+            );
+            return Img.findByIdAndRemove(removedCategory.img).exec();
+          })
+          .then((removedImg) => {
+            console.log(
+              `removed img ${removedImg.public_id} (${removedImg.version})`
+            );
+            if (!removedImg.public_id) return;
+
+            cloudinary.uploader
+              .destroy(removedImg.public_id)
+              .catch((err) => console.error(err));
+          })
           .then(() => {
             // TODO: remove image from cloudinary
             res.redirect(`/${INV_URL_NAME}/categories`);
@@ -243,9 +262,12 @@ exports.postUpdateCategory = [
 
     if (!req.file?.filename) {
       // there isn't a new file, don't do any cloudinary stuff
+
+      console.log("No file!!!");
       Category.findByIdAndUpdate(id, category, { new: true })
         .populate("img")
         .then((theCategory) => {
+          console.log("the category: ", theCategory);
           res.redirect(theCategory.url);
           return;
         });
@@ -283,3 +305,10 @@ exports.postUpdateCategory = [
     }
   },
 ];
+
+// default img function
+function createDefaultImg() {
+  const img = new Img({});
+  img.save().catch((err) => console.error(err));
+  return img;
+}
