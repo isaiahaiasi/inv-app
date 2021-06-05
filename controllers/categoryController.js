@@ -3,6 +3,8 @@ const { body, validationResult } = require("express-validator");
 
 const Category = require("../models/category");
 const Product = require("../models/product");
+const Img = require("../models/img");
+
 const { INV_URL_NAME } = require("../consts");
 const { UPLOAD_PATH } = require("../rootdir");
 
@@ -32,7 +34,7 @@ exports.categoryDetail = (req, res, next) => {
   const id = mongoose.Types.ObjectId(req.params.id);
 
   Promise.all([
-    Category.findById(id).exec(),
+    Category.findById(id).populate("img").exec(),
     Product.find({ category: id }).exec(),
   ])
     .then(([category, products]) => {
@@ -86,36 +88,41 @@ exports.postCreateCategory = [
     Category.findOne({ name: req.body.name })
       .exec()
       .then((foundCategory) => {
-        // TODO: not sure how to handle this, but this isn't what I want
-        // (eg, what if other details are changed--it's very confusing)
         if (foundCategory) {
+          // TODO: placeholder; just redirecting is too confusing...
           res.redirect(foundCategory.url);
           return;
         }
 
         // no errors, data is valid, and category doesn't exist yet
 
-        // TODO: ? EXTRACT CLOUDINARY STUFF TO SEPARATE FILE?
         // if there's image data, upload to cloudinary & save url to category
         if (req.file?.filename) {
           const imageLocation = UPLOAD_PATH + "/" + req.file.filename;
 
+          // upload the file
           cloudinary.uploader
             .upload(imageLocation, {
               folder: "category",
             })
             .then((image) => {
+              // delete local copy, create an img document with data & save it
               fs.unlink(imageLocation, (err) => console.error(err));
 
-              category.img_id = image.public_id;
-              console.log("category.img_id" + category.img_id);
-              category
-                .save()
-                .then(() => res.redirect(category.url))
-                .catch((err) => next(err));
+              const { public_id, version } = image;
+
+              // TODO: error checking?...
+              const img = new Img({ public_id, version });
+
+              return img.save();
             })
+            .then((img) => {
+              // save img document
+              category.img = img._id;
+              return category.save();
+            })
+            .then(() => res.redirect(category.url))
             .catch((err) => {
-              // error in cloudinary upload
               next(err);
             });
         } else {
@@ -205,10 +212,6 @@ exports.getUpdateCategory = (req, res, next) => {
     });
 };
 
-// validate & sanitize
-// make new genre
-// if new genre already exists, just redirect
-// otherwise, update the current record
 exports.postUpdateCategory = [
   ...validateAndSanitize,
   (req, res, next) => {
@@ -238,28 +241,45 @@ exports.postUpdateCategory = [
       return;
     }
 
-    // Validation & sanitization passed
-    // Make sure there isn't already a category with the same name
-    Category.findOne({ name: req.body.name })
-      .exec()
-      .then((match) => {
-        if (match) {
-          // There's already a category with this name, so just link there
-          res.redirect(`/${INV_URL_NAME}/category/${match._id}`);
-          return;
-        }
-
-        // Update!
-        Category.findByIdAndUpdate(id, category, {}, (err, theCategory) => {
-          if (err) {
-            return next(err);
-          }
-
+    if (!req.file?.filename) {
+      // there isn't a new file, don't do any cloudinary stuff
+      Category.findByIdAndUpdate(id, category, { new: true })
+        .populate("img")
+        .then((theCategory) => {
           res.redirect(theCategory.url);
+          return;
         });
-      })
-      .catch((err) => {
-        next(err);
-      });
+    } else {
+      // there IS a new file, so DO do cloudinary stuff
+      // Update
+      let updatedCategory;
+      Category.findByIdAndUpdate(id, category, { new: true })
+        .populate("img")
+        // Upload image to cloudinary
+        .then((result) => {
+          updatedCategory = result;
+          const imageLocation = UPLOAD_PATH + "/" + req.file.filename;
+          return cloudinary.uploader.upload(imageLocation, {
+            public_id: updatedCategory.img.public_id,
+            invalidate: true,
+          });
+        })
+        // Update img document with new cloudinary image version
+        .then((cld_img) => {
+          const updatedImg = new Img({
+            version: cld_img.version,
+            public_id: updatedCategory.img.public_id ?? cld_img.public_id,
+            _id: updatedCategory.img._id,
+          });
+
+          return Img.findByIdAndUpdate(updatedCategory.img._id, updatedImg);
+        })
+        .then(() => {
+          res.redirect(updatedCategory.url);
+        })
+        .catch((err) => {
+          next(err);
+        });
+    }
   },
 ];

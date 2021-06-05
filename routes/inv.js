@@ -62,7 +62,7 @@ router.post("/category/:id/delete", categoryController.postDeleteCategory);
 router.get("/category/:id/update", categoryController.getUpdateCategory);
 router.post("/category/:id/update", [
   // TODO: handle image upload for category via multer
-  upload.single("icon"),
+  upload.single("icon_upload"),
   categoryController.postUpdateCategory,
 ]);
 
