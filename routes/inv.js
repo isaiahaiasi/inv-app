@@ -17,6 +17,7 @@ router.get("/products", productController.productList);
 router.get("/product/create", productController.getCreateProduct);
 router.post("/product/create", [
   // TODO: handle image upload for product via multer
+  //! NOTE: ONCE ENCTYPE ADDED TO FORM, REQ.BODY BREAKS W/O MULTER MIDDLEWARE
   // upload.single("icon"),
   productController.postCreateProduct,
 ]);
@@ -61,7 +62,7 @@ router.post("/category/:id/delete", categoryController.postDeleteCategory);
 router.get("/category/:id/update", categoryController.getUpdateCategory);
 router.post("/category/:id/update", [
   // TODO: handle image upload for category via multer
-  //! upload.single("icon"),
+  upload.single("icon"),
   categoryController.postUpdateCategory,
 ]);
 

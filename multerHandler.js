@@ -39,8 +39,9 @@ const storage = multer.diskStorage({
   },
 
   filename: (req, file, cb) => {
-    const ext = getFileExtension(file);
-    cb(null, `${nanoid(10)}.${ext}`);
+    const uuid = nanoid(10);
+    const nameWithExtension = uuid + "." + getFileExtension(file);
+    cb(null, nameWithExtension);
   },
 });
 

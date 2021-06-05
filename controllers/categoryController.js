@@ -7,6 +7,7 @@ const { INV_URL_NAME } = require("../consts");
 const { UPLOAD_PATH } = require("../rootdir");
 
 const cloudinary = require("cloudinary").v2;
+const fs = require("fs");
 
 // same validation for create & update
 const validateAndSanitize = [
@@ -94,6 +95,7 @@ exports.postCreateCategory = [
 
         // no errors, data is valid, and category doesn't exist yet
 
+        // TODO: ? EXTRACT CLOUDINARY STUFF TO SEPARATE FILE?
         // if there's image data, upload to cloudinary & save url to category
         if (req.file?.filename) {
           const imageLocation = UPLOAD_PATH + "/" + req.file.filename;
@@ -103,14 +105,10 @@ exports.postCreateCategory = [
               folder: "category",
             })
             .then((image) => {
-              console.log("image public_id: ", image.public_id);
-              console.log("image url: ", image.url);
+              fs.unlink(imageLocation, (err) => console.error(err));
 
-              // TODO: REMOVE FROM LOCAL STORAGE
-
-              // TODO: SAVE URL TO CATEGORY
-              category.img_url = image.url;
-              console.log("category.img_url" + category.img_url);
+              category.img_id = image.public_id;
+              console.log("category.img_id" + category.img_id);
               category
                 .save()
                 .then(() => res.redirect(category.url))
@@ -179,6 +177,7 @@ exports.postDeleteCategory = (req, res, next) => {
         Category.findByIdAndRemove(id)
           .exec()
           .then(() => {
+            // TODO: remove image from cloudinary
             res.redirect(`/${INV_URL_NAME}/categories`);
           })
           .catch((err) => next(err));
@@ -221,7 +220,6 @@ exports.postUpdateCategory = [
     const category = new Category({ name: req.body.name, _id: id });
 
     if (req.body.adminpw !== process.env.ADMIN_PW) {
-      // res.status = 401;
       errors = [
         {
           msg: "Invalid password",
