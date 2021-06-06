@@ -160,7 +160,7 @@ exports.postDeleteCategory = (req, res, next) => {
   ])
     .then(([category, products]) => {
       // unauthorized w/o correct pw
-      if (req.body.adminpw !== process.env.ADMIN_PW) {
+      if (req.body.confirmationq !== process.env.ADMIN_PW) {
         const err = new Error("Invalid password");
         return next(err);
       }
