@@ -14,8 +14,6 @@ const fs = require("fs");
 // same validation for create & update
 const validateAndSanitize = [
   body("name").trim().isLength({ min: 3, max: 100 }).escape(),
-  // TODO: implement description in form & create/update routes
-  // body("description").trim().isLength({ min: 3, max: 3000 }).escape(),
 ];
 
 exports.categoryList = (req, res, next) => {
@@ -54,40 +52,28 @@ exports.getCreateCategory = (req, res) => {
 };
 
 exports.postCreateCategory = [
-  // validate & sanitize
   ...validateAndSanitize,
   (req, res, next) => {
-    // extract validation errors
-    let errors = validationResult(req).array();
-
-    const category = new Category({
-      name: req.body.name,
-      img: createDefaultImg(),
-    });
-
-    // if pw wrong, overwrite any other errors with unauthorized error
+    // if pw wrong, can escape early
     if (req.body.adminpw !== process.env.ADMIN_PW) {
       res.status = 401;
-      errors = [
-        {
-          msg: "Invalid password",
-          param: "adminpw",
-          location: "body",
-        },
-      ];
-    }
 
-    if (errors.length > 0) {
       res.render("category_form", {
         title: "Create Category",
-        category,
-        errors,
+        errors: [
+          {
+            msg: "Invalid password",
+            param: "adminpw",
+            location: "body",
+          },
+        ],
       });
       return;
     }
 
-    // if the category already exists, just redirect to that category
-    // otherwise, add it to the db & redirect to that page
+    // other error checking:
+    // - name already exists (async)
+    // - validationResult returned errors
     Category.findOne({ name: req.body.name })
       .exec()
       .then((foundCategory) => {
@@ -97,46 +83,52 @@ exports.postCreateCategory = [
           return;
         }
 
-        // no errors, data is valid, and category doesn't exist yet
+        // extract validation errors
+        const errors = validationResult(req).array();
 
-        // if there's image data, upload to cloudinary & save url to category
-        if (req.file?.filename) {
+        const img = new Img({});
+        const category = new Category({
+          name: req.body.name,
+          img: img._id,
+        });
+
+        if (errors.length > 0) {
+          res.render("category_form", {
+            title: "Create Category",
+            category,
+            errors,
+          });
+          return;
+        }
+
+        // no errors, data is valid, and category doesn't exist yet:
+        // ADD DOCUMENT
+        if (!req.file?.filename) {
+          // no image data: just save text fields
+          Promise.all([category.save(), img.save()])
+            .then(() => res.redirect(category.url))
+            .catch(next);
+        } else {
+          // there's image data: upload to cloudinary w id of img._id
           const imageLocation = UPLOAD_PATH + "/" + req.file.filename;
 
-          // upload the file
           cloudinary.uploader
             .upload(imageLocation, {
               folder: "category",
+              public_id: img._id,
             })
-            .then((image) => {
+            .then((cld_img) => {
               // delete local copy, create an img document with data & save it
-              fs.unlink(imageLocation, (err) => console.error(err));
-
-              const { public_id, version } = image;
-
-              // TODO: error checking?...
-              const img = new Img({ public_id, version });
-
+              fs.unlink(imageLocation, console.error);
+              img.version = cld_img.version;
               return img.save();
             })
-            .then((img) => {
-              // save img document
-              category.img = img._id;
-              return category.save();
-            })
-            .then(() => res.redirect(category.url))
-            .catch((err) => {
-              next(err);
-            });
-        } else {
-          // no image data, just save text fields
-          category
-            .save()
-            .then(() => res.redirect(category.url))
-            .catch((err) => next(err));
+            .then(() => category.save()) //! WHY IS THIS FAILING??????
+            .then(({ url }) => res.redirect(url))
+            .catch(next);
         }
       })
-      .catch((err) => next(err));
+      .catch(next);
   },
 ];
 
@@ -156,9 +148,7 @@ exports.getDeleteCategory = (req, res, next) => {
         products,
       });
     })
-    .catch((err) => {
-      next(err);
-    });
+    .catch(next);
 };
 
 exports.postDeleteCategory = (req, res, next) => {
@@ -182,31 +172,39 @@ exports.postDeleteCategory = (req, res, next) => {
           category,
           products,
         });
+
+        return;
       } else {
-        // delete & send back to categories
-        Category.findByIdAndRemove(id)
-          .exec()
-          .then((removedCategory) => {
+        // delete category & associated img, then send back to categories
+        const removeCategoryPromise = Category.findByIdAndRemove(id).exec();
+        const removeImgPromise = removeCategoryPromise.then(
+          (removedCategory) => {
+            console.log("removed category: ", removedCategory);
+            return Img.findByIdAndRemove(removedCategory.img).exec();
+          }
+        );
+
+        // (this feels really ugly, but I can't think of a nicer way to handle
+        //  Promise B & Promise C both having a dependency on Promise A)
+        Promise.all([removeCategoryPromise, removeImgPromise])
+          .then(([removedCategory, removedImg]) => {
             console.log(
               `removed ${removedCategory.name} (${removedCategory._id})`
             );
-            return Img.findByIdAndRemove(removedCategory.img).exec();
-          })
-          .then((removedImg) => {
             console.log(
-              `removed img ${removedImg.public_id} (${removedImg.version})`
+              `removed img ${removedImg._id} (${removedImg.version})`
             );
-            if (!removedImg.public_id) return;
 
             cloudinary.uploader
-              .destroy(removedImg.public_id)
+              .destroy(removedImg._id)
               .catch((err) => console.error(err));
           })
           .then(() => {
-            // TODO: remove image from cloudinary
             res.redirect(`/${INV_URL_NAME}/categories`);
           })
-          .catch((err) => next(err));
+          .catch((err) => {
+            return next(err);
+          });
       }
     })
     .catch((err) => {
@@ -215,8 +213,6 @@ exports.postDeleteCategory = (req, res, next) => {
 };
 
 exports.getUpdateCategory = (req, res, next) => {
-  // get category
-  // render category form and give it category
   const id = mongoose.Types.ObjectId(req.params.id);
   Category.findById(id)
     .exec()
@@ -234,13 +230,7 @@ exports.getUpdateCategory = (req, res, next) => {
 exports.postUpdateCategory = [
   ...validateAndSanitize,
   (req, res, next) => {
-    // extract errors
-    let errors = validationResult(req).array();
-
-    const id = mongoose.Types.ObjectId(req.params.id);
-
-    const category = new Category({ name: req.body.name, _id: id });
-
+    // escape early if pw is wrong
     if (req.body.adminpw !== process.env.ADMIN_PW) {
       errors = [
         {
@@ -250,6 +240,14 @@ exports.postUpdateCategory = [
         },
       ];
     }
+
+    // extract errors
+    let errors = validationResult(req).array();
+
+    const id = mongoose.Types.ObjectId(req.params.id);
+
+    // b/c I'm updating, I can send an obj literal instead of an instance of my model
+    const category = { name: req.body.name, _id: id };
 
     if (errors.length > 0) {
       res.render("category_form", {
@@ -262,7 +260,6 @@ exports.postUpdateCategory = [
 
     if (!req.file?.filename) {
       // there isn't a new file, don't do any cloudinary stuff
-
       console.log("No file!!!");
       Category.findByIdAndUpdate(id, category, { new: true })
         .populate("img")
@@ -273,30 +270,33 @@ exports.postUpdateCategory = [
         });
     } else {
       // there IS a new file, so DO do cloudinary stuff
-      // Update
-      let updatedCategory;
-      Category.findByIdAndUpdate(id, category, { new: true })
+
+      const updateCategoryPromise = Category.findByIdAndUpdate(id, category, {
+        new: true,
+      })
         .populate("img")
-        // Upload image to cloudinary
-        .then((result) => {
-          updatedCategory = result;
+        .exec();
+
+      const updateImgPromise = updateCategoryPromise
+        .then((updatedCategory) => {
           const imageLocation = UPLOAD_PATH + "/" + req.file.filename;
           return cloudinary.uploader.upload(imageLocation, {
-            public_id: updatedCategory.img.public_id,
+            public_id: updatedCategory.img._id,
             invalidate: true,
           });
         })
-        // Update img document with new cloudinary image version
-        .then((cld_img) => {
+        .then((cldImg) => {
+          // Update img document with new cloudinary image version
           const updatedImg = new Img({
-            version: cld_img.version,
-            public_id: updatedCategory.img.public_id ?? cld_img.public_id,
-            _id: updatedCategory.img._id,
+            version: cldImg.version,
+            _id: cldImg.public_id,
           });
 
-          return Img.findByIdAndUpdate(updatedCategory.img._id, updatedImg);
-        })
-        .then(() => {
+          return Img.findByIdAndUpdate(updatedImg._id, updatedImg);
+        });
+
+      Promise.all([updateCategoryPromise, updateImgPromise])
+        .then(([updatedCategory]) => {
           res.redirect(updatedCategory.url);
         })
         .catch((err) => {
@@ -305,10 +305,3 @@ exports.postUpdateCategory = [
     }
   },
 ];
-
-// default img function
-function createDefaultImg() {
-  const img = new Img({});
-  img.save().catch((err) => console.error(err));
-  return img;
-}
