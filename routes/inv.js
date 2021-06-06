@@ -25,7 +25,6 @@ router.post("/product/create", [
 router.get("/product/:id", productController.productDetail);
 
 // DELETE
-// TODO: remove image from cloudinary storage
 router.get("/product/:id/delete", productController.getDeleteProduct);
 router.post("/product/:id/delete", productController.postDeleteProduct);
 

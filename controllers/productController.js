@@ -211,16 +211,23 @@ exports.postDeleteProduct = [
     const id = mongoose.Types.ObjectId(req.body.productid);
     Product.findByIdAndRemove(id)
       .exec()
-      .then((product) => {
+      .then((removedProduct) => {
         // this is probably superfluous
-        if (product == null) {
+        if (removedProduct == null) {
           const err = new Error("Product not found!");
           err.status = 404;
           return next(err);
         }
 
-        res.redirect(`/${INV_URL_NAME}/products`);
+        return Img.findByIdAndRemove(removedProduct.img);
       })
+      .then((removedImg) => {
+        return cloudinary.uploader.destroy(removedImg.full_path, {
+          invalidate: true,
+          version: removedImg.version,
+        });
+      })
+      .then(() => res.redirect(`/${INV_URL_NAME}/products`))
       .catch((err) => next(err));
   },
 ];
