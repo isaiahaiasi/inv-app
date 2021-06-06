@@ -126,7 +126,7 @@ exports.postCreateCategory = [
               img.version = cld_img.version;
               return img.save();
             })
-            .then(() => category.save()) //! WHY IS THIS FAILING??????
+            .then(() => category.save())
             .then(({ url }) => res.redirect(url))
             .catch(next);
         }
@@ -276,29 +276,36 @@ exports.postUpdateCategory = [
     } else {
       // there IS a new file, so DO do cloudinary stuff
 
+      console.log("beginning update");
+
       const updateCategoryPromise = Category.findByIdAndUpdate(id, category, {
         new: true,
       })
         .populate("img")
         .exec();
 
-      const updateImgPromise = updateCategoryPromise
-        .then((updatedCategory) => {
-          const imageLocation = UPLOAD_PATH + "/" + req.file.filename;
-          return cloudinary.uploader.upload(imageLocation, {
-            public_id: updatedCategory.img._id,
-            invalidate: true,
-          });
-        })
-        .then((cldImg) => {
+      const updateImgPromise = updateCategoryPromise.then((updatedCategory) => {
+        const localImagePath = UPLOAD_PATH + "/" + req.file.filename;
+        return cloudinary.uploader.upload(localImagePath, {
+          folder: updatedCategory.img.folder,
+          public_id: updatedCategory.img._id,
+          invalidate: true,
+        });
+      });
+
+      Promise.all([updateCategoryPromise, updateImgPromise]).then(
+        ([updatedCategory, cloudUploadResponse]) => {
+          console.log("Cloud Image:");
+          console.log(cloudUploadResponse);
           // Update img document with new cloudinary image version
-          const updatedImg = new Img({
-            version: cldImg.version,
-            _id: cldImg.public_id,
-          });
+          const updatedImg = {
+            version: cloudUploadResponse.version,
+            _id: updatedCategory.img._id,
+          };
 
           return Img.findByIdAndUpdate(updatedImg._id, updatedImg);
-        });
+        }
+      );
 
       Promise.all([updateCategoryPromise, updateImgPromise])
         .then(([updatedCategory]) => {
