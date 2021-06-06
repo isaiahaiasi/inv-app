@@ -86,7 +86,7 @@ exports.postCreateCategory = [
         // extract validation errors
         const errors = validationResult(req).array();
 
-        const img = new Img({});
+        const img = new Img({ folder: "category" });
         const category = new Category({
           name: req.body.name,
           img: img._id,
@@ -118,6 +118,9 @@ exports.postCreateCategory = [
               public_id: img._id,
             })
             .then((cld_img) => {
+              console.log("!!!");
+              console.log("CLOUDINARY UPLOAD RETURN:");
+              console.log(cld_img);
               // delete local copy, create an img document with data & save it
               fs.unlink(imageLocation, console.error);
               img.version = cld_img.version;
@@ -189,22 +192,23 @@ exports.postDeleteCategory = (req, res, next) => {
         Promise.all([removeCategoryPromise, removeImgPromise])
           .then(([removedCategory, removedImg]) => {
             console.log(
-              `removed ${removedCategory.name} (${removedCategory._id})`
+              `removed: ${removedCategory.name} (${removedCategory._id})`
             );
             console.log(
-              `removed img ${removedImg._id} (${removedImg.version})`
+              `removed: img ${removedImg._id} (${removedImg.version})`
             );
 
-            cloudinary.uploader
-              .destroy(() => {
-                console.log(
-                  `attempting to remove ${removedImg._id} from cloudinary`
-                );
-                return removedImg._id;
+            console.log("beginning to remove from cloudinary");
+
+            return cloudinary.uploader
+              .destroy(removedImg.full_path, {
+                invalidate: true,
+                version: removedImg.version,
               })
-              .catch(console.error);
+              .then(console.log);
           })
           .then(() => {
+            console.log("should have removed from cloudinary");
             res.redirect(`/${INV_URL_NAME}/categories`);
           })
           .catch(next);
