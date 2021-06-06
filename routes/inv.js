@@ -32,8 +32,7 @@ router.post("/product/:id/delete", productController.postDeleteProduct);
 // UPDATE
 router.get("/product/:id/update", productController.getUpdateProduct);
 router.post("/product/:id/update", [
-  // TODO: handle image upload for product via multer
-  //! upload.single("icon"),
+  upload.single("icon_upload"),
   productController.postUpdateProduct,
 ]);
 

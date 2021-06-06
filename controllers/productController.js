@@ -250,18 +250,27 @@ exports.postUpdateProduct = [
     const id = mongoose.Types.ObjectId(req.params.id);
 
     Promise.all([
-      Product.find({ name: req.body.name, _id: { $ne: req.params.id } }).exec(),
-      Category.findById(mongoose.Types.ObjectId(req.body.category)).exec(),
       Product.findById(id).exec(),
+      // find any products that already have the same name
+      Product.find({ name: req.body.name, _id: { $ne: req.params.id } }).exec(),
+      // find the selected category
+      Category.findById(mongoose.Types.ObjectId(req.body.category)).exec(),
     ])
-      .then(([matchedProducts, category, oldProduct]) => {
+      .then(([oldProduct, matchedProducts, category]) => {
+        console.log("req.body:");
+        console.log(req.body);
+        console.log("oldProduct:");
+        console.log(oldProduct);
         const { name, description, price, stock } = req.body;
+
+        // representing product w object literal, since I don't know
         const product = new Product({
           name,
           description,
           price,
           stock,
           category,
+          img: oldProduct.img,
           _id: id,
         });
 
@@ -314,14 +323,56 @@ exports.postUpdateProduct = [
         }
 
         // all validation passed
-        Product.findByIdAndUpdate(id, product)
-          .exec()
-          .then((updatedProduct) => {
-            // TODO? Check if updatedProduct exists, if not re-render form?
-            res.redirect(updatedProduct.url);
+
+        if (!req.file?.filename) {
+          Product.findByIdAndUpdate(id, product)
+            .exec()
+            .then((updatedProduct) => {
+              res.redirect(updatedProduct.url);
+            })
+            .catch((err) => next(err));
+        } else {
+          const localImagePath = UPLOAD_PATH + "/" + req.file.filename;
+
+          const updateProductPromise = Product.findByIdAndUpdate(id, product, {
+            new: true,
           })
-          .catch((err) => next(err));
+            .populate("img")
+            .exec();
+
+          const uploadImgPromise = updateProductPromise.then(
+            (updatedProduct) => {
+              return cloudinary.uploader.upload(localImagePath, {
+                folder: updatedProduct.img.folder,
+                public_id: updatedProduct.img._id,
+                invalidate: true,
+              });
+            }
+          );
+
+          const updateImgPromise = Promise.all([
+            updateProductPromise,
+            uploadImgPromise,
+          ]).then(([updatedProduct, cloudUploadResponse]) => {
+            fs.unlink(localImagePath, console.error);
+
+            const updatedImg = {
+              version: cloudUploadResponse.version,
+              _id: updatedProduct.img._id,
+            };
+
+            return Img.findByIdAndUpdate(updatedImg._id, updatedImg, {
+              new: true,
+            });
+          });
+
+          Promise.all([updateProductPromise, updateImgPromise]).then(
+            ([updatedProduct]) => {
+              res.redirect(updatedProduct.url);
+            }
+          );
+        }
       })
-      .catch((err) => next(err));
+      .catch(next);
   },
 ];
