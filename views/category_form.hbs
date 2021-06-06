@@ -1,13 +1,15 @@
 {{#> main_content}}
+  <h3 class="text-5xl align-top">{{title}}</h3>
+  <section class="pt-4">
   <form method="POST" action="" class="m-0" enctype="multipart/form-data">
     <div class="pb-4">
       <label for="name">Category name:</label>
       <input 
         class="rounded-sm pr-2 pl-2 text-gray-900" 
-        type="text" 
+        type="text"
         placeholder="Attire, Firearms, etc." 
-        id="name" 
-        name="name" 
+        id="name"
+        name="name"
         required="true"
         value="{{#if category}}{{category.name}}{{/if}}"
         >
@@ -21,9 +23,12 @@
         name="icon_upload"
       >
     </div>
-    {{> adminpw }}
+    <div class="pb-4 flex flex-col">
+      {{> adminpw }}
+    </div>
     {{#> button type="submit"}}Submit{{/button}}
   </form>
+  </section>
   {{#if errors}}
     <ul>
       {{#each errors}}

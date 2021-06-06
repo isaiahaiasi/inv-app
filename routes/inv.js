@@ -43,25 +43,23 @@ router.post("/product/:id/update", [
 //-----------------------
 router.get("/categories", categoryController.categoryList);
 
-// "CREATE" ROUTES (must go b/f :id urls)
+// CREATE (must go b/f :id urls)
 router.get("/category/create", categoryController.getCreateCategory);
 router.post("/category/create", [
-  // TODO: handle image upload for category via multer
   upload.single("icon_upload"),
   categoryController.postCreateCategory,
 ]);
 
+// READ
 router.get("/category/:id", categoryController.categoryDetail);
 
 // DELETE
-// TODO: remove image from cloudinary storage
 router.get("/category/:id/delete", categoryController.getDeleteCategory);
 router.post("/category/:id/delete", categoryController.postDeleteCategory);
 
 // UPDATE
 router.get("/category/:id/update", categoryController.getUpdateCategory);
 router.post("/category/:id/update", [
-  // TODO: handle image upload for category via multer
   upload.single("icon_upload"),
   categoryController.postUpdateCategory,
 ]);

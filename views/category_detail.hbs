@@ -1,18 +1,22 @@
 {{#> main_content}}
-  <h3 class="text-5xl">{{category.name}}</h3>
+  <h3 class="text-5xl align-top">{{category.name}}</h3>
+  <section class="pt-4 pb-4">
     <img src={{category.img.url}} alt="Category image">
-  {{#if products}}
-    <ul class="flex flex-col">
-      {{#each products}}
-        <li>
-          {{> product_card product=this}}
-        </li>
-      {{/each}}
-    </ul>
-  {{else}}
-    <p>There are no items in this category.</p>
-  {{/if}}
-  <a href={{link category.url "/update"}}>
+  </section>
+  <section class="pb-4">
+    {{#if products}}
+      <ul class="flex flex-col pl-4">
+        {{#each products}}
+          <li>
+            {{> product_card product=this}}
+          </li>
+        {{/each}}
+      </ul>
+    {{else}}
+      <p>There are no items in this category.</p>
+    {{/if}}
+  </section>
+  <a class="pr-4" href={{link category.url "/update"}}>
     {{#> button}} Update category {{/button}}
   </a>
   <a href={{link category.url "/delete"}}>

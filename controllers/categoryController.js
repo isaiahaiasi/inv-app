@@ -14,6 +14,7 @@ const fs = require("fs");
 // same validation for create & update
 const validateAndSanitize = [
   body("name").trim().isLength({ min: 3, max: 100 }).escape(),
+  body("description").trim().isLength({ max: 3000 }).escape(),
 ];
 
 exports.categoryList = (req, res, next) => {
@@ -160,7 +161,7 @@ exports.postDeleteCategory = (req, res, next) => {
   ])
     .then(([category, products]) => {
       // unauthorized w/o correct pw
-      if (req.body.confirmationq !== process.env.ADMIN_PW) {
+      if (req.body.adminpw !== process.env.ADMIN_PW) {
         const err = new Error("Invalid password");
         return next(err);
       }
