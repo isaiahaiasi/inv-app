@@ -118,9 +118,6 @@ exports.postCreateCategory = [
               public_id: img._id,
             })
             .then((cld_img) => {
-              console.log("!!!");
-              console.log("CLOUDINARY UPLOAD RETURN:");
-              console.log(cld_img);
               // delete local copy, create an img document with data & save it
               fs.unlink(imageLocation, console.error);
               img.version = cld_img.version;
@@ -179,38 +176,15 @@ exports.postDeleteCategory = (req, res, next) => {
         return;
       } else {
         // delete category & associated img, then send back to categories
-        const removeCategoryPromise = Category.findByIdAndRemove(id).exec();
-        const removeImgPromise = removeCategoryPromise.then(
-          (removedCategory) => {
-            console.log("removed category: ", removedCategory);
-            return Img.findByIdAndRemove(removedCategory.img).exec();
-          }
-        );
-
-        // (this feels really ugly, but I can't think of a nicer way to handle
-        //  Promise B & Promise C both having a dependency on Promise A)
-        Promise.all([removeCategoryPromise, removeImgPromise])
-          .then(([removedCategory, removedImg]) => {
-            console.log(
-              `removed: ${removedCategory.name} (${removedCategory._id})`
-            );
-            console.log(
-              `removed: img ${removedImg._id} (${removedImg.version})`
-            );
-
-            console.log("beginning to remove from cloudinary");
-
-            return cloudinary.uploader
-              .destroy(removedImg.full_path, {
-                invalidate: true,
-                version: removedImg.version,
-              })
-              .then(console.log);
+        Category.findByIdAndRemove(id)
+          .then((removedCategory) => Img.findByIdAndRemove(removedCategory.img))
+          .then((removedImg) => {
+            return cloudinary.uploader.destroy(removedImg.full_path, {
+              invalidate: true,
+              version: removedImg.version,
+            });
           })
-          .then(() => {
-            console.log("should have removed from cloudinary");
-            res.redirect(`/${INV_URL_NAME}/categories`);
-          })
+          .then(() => res.redirect(`/${INV_URL_NAME}/categories`))
           .catch(next);
       }
     })
@@ -264,18 +238,12 @@ exports.postUpdateCategory = [
 
     if (!req.file?.filename) {
       // there isn't a new file, don't do any cloudinary stuff
-      console.log("No file!!!");
       Category.findByIdAndUpdate(id, category, { new: true })
         .populate("img")
-        .then((theCategory) => {
-          console.log("the category: ", theCategory);
-          res.redirect(theCategory.url);
-          return;
-        });
+        .then((theCategory) => res.redirect(theCategory.url));
     } else {
       // there IS a new file, so DO do cloudinary stuff
-
-      console.log("beginning update");
+      const localImagePath = UPLOAD_PATH + "/" + req.file.filename;
 
       const updateCategoryPromise = Category.findByIdAndUpdate(id, category, {
         new: true,
@@ -284,35 +252,27 @@ exports.postUpdateCategory = [
         .exec();
 
       const updateImgPromise = updateCategoryPromise.then((updatedCategory) => {
-        const localImagePath = UPLOAD_PATH + "/" + req.file.filename;
-        const cloudinaryUploadPromise = cloudinary.uploader.upload(
-          localImagePath,
-          {
-            folder: updatedCategory.img.folder,
-            public_id: updatedCategory.img._id,
-            invalidate: true,
-          }
-        );
-
-        // clear local copy of image
-        cloudinaryUploadPromise.then(() =>
-          fs.unlink(localImagePath, console.error)
-        );
-
-        return cloudinaryUploadPromise;
+        return cloudinary.uploader.upload(localImagePath, {
+          folder: updatedCategory.img.folder,
+          public_id: updatedCategory.img._id,
+          invalidate: true,
+        });
       });
 
       Promise.all([updateCategoryPromise, updateImgPromise]).then(
         ([updatedCategory, cloudUploadResponse]) => {
-          console.log("Cloud Image:");
-          console.log(cloudUploadResponse);
+          // clear local copy of image
+          fs.unlink(localImagePath, console.error);
+
           // Update img document with new cloudinary image version
           const updatedImg = {
             version: cloudUploadResponse.version,
             _id: updatedCategory.img._id,
           };
 
-          return Img.findByIdAndUpdate(updatedImg._id, updatedImg);
+          return Img.findByIdAndUpdate(updatedImg._id, updatedImg, {
+            new: true,
+          });
         }
       );
 
