@@ -235,7 +235,9 @@ exports.getUpdateCategory = (req, res, next) => {
 exports.postUpdateCategory = [
   ...validateAndSanitize,
   (req, res, next) => {
-    // escape early if pw is wrong
+    // extract errors
+    let errors = validationResult(req).array();
+
     if (req.body.adminpw !== process.env.ADMIN_PW) {
       errors = [
         {
@@ -245,9 +247,6 @@ exports.postUpdateCategory = [
         },
       ];
     }
-
-    // extract errors
-    let errors = validationResult(req).array();
 
     const id = mongoose.Types.ObjectId(req.params.id);
 
@@ -286,11 +285,21 @@ exports.postUpdateCategory = [
 
       const updateImgPromise = updateCategoryPromise.then((updatedCategory) => {
         const localImagePath = UPLOAD_PATH + "/" + req.file.filename;
-        return cloudinary.uploader.upload(localImagePath, {
-          folder: updatedCategory.img.folder,
-          public_id: updatedCategory.img._id,
-          invalidate: true,
-        });
+        const cloudinaryUploadPromise = cloudinary.uploader.upload(
+          localImagePath,
+          {
+            folder: updatedCategory.img.folder,
+            public_id: updatedCategory.img._id,
+            invalidate: true,
+          }
+        );
+
+        // clear local copy of image
+        cloudinaryUploadPromise.then(() =>
+          fs.unlink(localImagePath, console.error)
+        );
+
+        return cloudinaryUploadPromise;
       });
 
       Promise.all([updateCategoryPromise, updateImgPromise]).then(
