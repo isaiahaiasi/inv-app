@@ -16,9 +16,8 @@ router.get("/products", productController.productList);
 // CREATE (must go b/f :id urls)
 router.get("/product/create", productController.getCreateProduct);
 router.post("/product/create", [
-  // TODO: handle image upload for product via multer
   //! NOTE: ONCE ENCTYPE ADDED TO FORM, REQ.BODY BREAKS W/O MULTER MIDDLEWARE
-  // upload.single("icon"),
+  upload.single("icon_upload"),
   productController.postCreateProduct,
 ]);
 

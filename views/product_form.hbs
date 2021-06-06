@@ -1,74 +1,85 @@
 {{#> main_content}}
   <h1 class="text-6xl">{{title}}</h1>
-  <form method="POST" action="">
-    <div class="p-2 flex flex-col">
-      <label for="name">Name: </label>
-      <input 
-      class="rounded-sm pr-2 pl-2 text-gray-900"
-        id="name" 
-        name="name" 
-        type="text" 
-        required="true"
-        value="{{#if product}}{{product.name}}{{/if}}"
-        placeholder="Pebble, Blunderbuss, etc."
-      >
-    </div>
-    <div class="p-2 flex flex-col">
-      <label for="description">Description: </label>
-      <textarea
-      class="rounded-sm pr-2 pl-2 text-gray-900"
-        id="description"
-        name="description"
-        required="true"
-        placeholder="Product description"
-      >{{#if product}}{{product.description}}{{/if}}</textarea>
-    </div>
-    <div class="p-2 flex flex-col">
-      <label for="category">Category: </label>
-      <select 
+  <section class="pr-2 pl-2">
+    <form method="POST" action="" enctype="multipart/form-data">
+      <div class="flex flex-col pb-4">
+        <label for="name">Name: </label>
+        <input 
         class="rounded-sm pr-2 pl-2 text-gray-900"
-        id="category" name="category"
+          id="name" 
+          name="name" 
+          type="text" 
+          required="true"
+          value="{{#if product}}{{product.name}}{{/if}}"
+          placeholder="Pebble, Blunderbuss, etc."
         >
-        {{#each categories}}
-          <option value={{this._id}} 
-            {{#ifeq this._id ../product.category}} 
-              selected 
-            {{/ifeq}}
+      </div>
+      <div class="flex flex-col pb-4">
+        <label for="description">Description: </label>
+        <textarea
+        class="rounded-sm pr-2 pl-2 text-gray-900"
+          id="description"
+          name="description"
+          required="true"
+          placeholder="Product description"
+        >{{#if product}}{{product.description}}{{/if}}</textarea>
+      </div>
+      <div class="pb-4 flex flex-col">
+        <label for="category">Category: </label>
+        <select 
+          class="rounded-sm pr-2 pl-2 text-gray-900"
+          id="category" name="category"
           >
-            {{this.name}}
-          </option>
-        {{/each}}
-      </select>
-    </div>
-    <div class="p-2 flex flex-col">
-      <label for="price">Price: </label>
+          {{#each categories}}
+            <option value={{this._id}} 
+              {{#ifeq this._id ../product.category}} 
+                selected 
+              {{/ifeq}}
+            >
+              {{this.name}}
+            </option>
+          {{/each}}
+        </select>
+      </div>
+      <div class="pb-4 flex flex-col">
+        <label for="price">Price: </label>
+        <input
+          class="rounded-sm pr-2 pl-2 text-gray-900"
+          id="price"
+          name="price"
+          type="number"
+          {{#if product}}value={{product.price}}{{/if}}
+          required="true"
+        >
+      </div>
+      <div class="pb-4 flex flex-col">
+        <label for="stock">Stock: </label>
+        <input
+          class="rounded-sm pr-2 pl-2 text-gray-900"
+          id="stock"
+          name="stock"
+          type="number"
+          required="true"
+          {{#if product}}value={{product.stock}}{{/if}}
+        >
+      </div>
+      <div class="pb-4 flex flex-col">
+      <label for="name">Product icon:</label>
       <input
-        class="rounded-sm pr-2 pl-2 text-gray-900"
-        id="price"
-        name="price"
-        type="number"
-        {{#if product}}value={{product.price}}{{/if}}
-        required="true"
+        class="rounded-sm pr-2 pl-2 text-gray-900" 
+        type="file"
+        id="icon_upload"
+        name="icon_upload"
       >
     </div>
-    <div class="p-2 flex flex-col">
-      <label for="stock">Stock: </label>
-      <input
-        class="rounded-sm pr-2 pl-2 text-gray-900"
-        id="stock"
-        name="stock"
-        type="number"
-        required="true"
-        {{#if product}}value={{product.stock}}{{/if}}
-      >
-    </div>
-
-    {{> adminpw }}
-
-    <div class="pl-2 pt-2">
-      {{#> button type="submit"}}Submit{{/button}}
-    </div>
-  </form>
+      <div class="pb-4 flex flex-col">
+        {{> adminpw }}
+      </div>
+      <div class="pl-2 pt-2">
+        {{#> button type="submit"}}Submit{{/button}}
+      </div>
+    </form>
+  </section>
   {{#if errors}}
     <ul>
       {{#each errors}}

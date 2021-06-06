@@ -18,6 +18,7 @@ const ProductSchema = new Schema({
   category: { type: Schema.Types.ObjectId, ref: "Category", required: true },
   price: { ...positiveIntegerOptions, required: true },
   stock: { ...positiveIntegerOptions, required: true },
+  img: { type: Schema.Types.ObjectId, ref: "Img", required: true },
 });
 
 ProductSchema.virtual("url").get(function () {

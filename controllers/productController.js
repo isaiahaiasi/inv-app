@@ -4,6 +4,11 @@ const { INV_URL_NAME } = require("../consts");
 
 const Product = require("../models/product");
 const Category = require("../models/category");
+const Img = require("../models/img");
+const { UPLOAD_PATH } = require("../rootdir");
+
+const cloudinary = require("cloudinary").v2;
+const fs = require("fs");
 
 const validateAndSanitize = [
   body("name").trim().isLength({ min: 3, max: 100 }),
@@ -43,7 +48,7 @@ exports.productList = (req, res, next) => {
 exports.productDetail = (req, res, next) => {
   const id = mongoose.Types.ObjectId(req.params.id);
   Product.findById(id)
-    .populate("category")
+    .populate(["category", "img"])
     .exec()
     .then((product) => {
       res.render("product_detail", {
@@ -73,15 +78,25 @@ exports.postCreateProduct = [
   ...validateAndSanitize,
   (req, res, next) => {
     Promise.all([
+      // get full list of categories, to provide as options
       Category.find({}).exec(),
-      Category.findById(req.body.category).exec(), // ensure selected category exists
-      Product.find({ name: req.body.name }).exec(), // ensure there isn't already a product with this name
+      // ensure selected category exists
+      Category.findById(req.body.category).exec(),
+      // ensure there isn't already a product with this name
+      Product.find({ name: req.body.name }).exec(),
     ])
       .then(([categories, category, matchedName]) => {
         const errors = validationResult(req).array();
 
+        const img = new Img({ folder: "product" });
+
+        const { name, description, price, stock } = req.body;
         const product = new Product({
-          ...req.body,
+          name,
+          description,
+          price,
+          stock,
+          img: img._id,
           category: category ?? categories[0],
         });
 
@@ -124,13 +139,31 @@ exports.postCreateProduct = [
           return;
         }
 
-        // ALL ERROR CHECKING PASSED! SAVE PRODUCT & REDIRECT TO ITS PAGE
-        product
-          .save()
-          .then(() => res.redirect(product.url))
-          .catch((err) => next(err));
+        // ALL ERROR CHECKING PASSED!
+        if (!req.file?.filename) {
+          console.log("NOT attempting upload to cloudinary...");
+          Promise.all([product.save(), img.save()])
+            .then(() => res.redirect(product.url))
+            .catch(next);
+        } else {
+          const imageLocation = UPLOAD_PATH + "/" + req.file.filename;
+          console.log("Attempting upload to cloudinary");
+          cloudinary.uploader
+            .upload(imageLocation, {
+              folder: img.folder,
+              public_id: img._id,
+            })
+            .then((cloudUploadResponse) => {
+              fs.unlink(imageLocation, console.error);
+              img.version = cloudUploadResponse.version;
+              return img.save();
+            })
+            .then(() => product.save())
+            .then(({ url }) => res.redirect(url))
+            .catch(next);
+        }
       })
-      .catch((err) => next(err));
+      .catch(next);
   },
 ];
 
