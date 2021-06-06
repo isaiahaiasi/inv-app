@@ -3,13 +3,17 @@ const { body, validationResult } = require("express-validator");
 
 const Category = require("../models/category");
 const Product = require("../models/product");
+const Img = require("../models/img");
+
 const { INV_URL_NAME } = require("../consts");
+const { UPLOAD_PATH } = require("../rootdir");
+
+const cloudinary = require("cloudinary").v2;
+const fs = require("fs");
 
 // same validation for create & update
 const validateAndSanitize = [
   body("name").trim().isLength({ min: 3, max: 100 }).escape(),
-  // TODO: implement description in form & create/update routes
-  // body("description").trim().isLength({ min: 3, max: 3000 }).escape(),
 ];
 
 exports.categoryList = (req, res, next) => {
@@ -28,7 +32,7 @@ exports.categoryDetail = (req, res, next) => {
   const id = mongoose.Types.ObjectId(req.params.id);
 
   Promise.all([
-    Category.findById(id).exec(),
+    Category.findById(id).populate("img").exec(),
     Product.find({ category: id }).exec(),
   ])
     .then(([category, products]) => {
@@ -48,52 +52,83 @@ exports.getCreateCategory = (req, res) => {
 };
 
 exports.postCreateCategory = [
-  // validate & sanitize
   ...validateAndSanitize,
   (req, res, next) => {
-    // extract validation errors
-    let errors = validationResult(req).array();
-
-    const category = new Category({ name: req.body.name });
-
-    // if pw wrong, overwrite any other errors with unauthorized error
+    // if pw wrong, can escape early
     if (req.body.adminpw !== process.env.ADMIN_PW) {
       res.status = 401;
-      errors = [
-        {
-          msg: "Invalid password",
-          param: "adminpw",
-          location: "body",
-        },
-      ];
-    }
 
-    if (errors.length > 0) {
       res.render("category_form", {
         title: "Create Category",
-        category,
-        errors,
+        errors: [
+          {
+            msg: "Invalid password",
+            param: "adminpw",
+            location: "body",
+          },
+        ],
       });
       return;
     }
 
-    // if the category already exists, just redirect to that category
-    // otherwise, add it to the db & redirect to that page
+    // other error checking:
+    // - name already exists (async)
+    // - validationResult returned errors
     Category.findOne({ name: req.body.name })
       .exec()
       .then((foundCategory) => {
         if (foundCategory) {
+          // TODO: placeholder; just redirecting is too confusing...
           res.redirect(foundCategory.url);
           return;
         }
 
-        // no errors, data is valid, and category doesn't exist yet
-        category
-          .save()
-          .then(() => res.redirect(category.url))
-          .catch((err) => next(err));
+        // extract validation errors
+        const errors = validationResult(req).array();
+
+        const img = new Img({ folder: "category" });
+        const category = new Category({
+          name: req.body.name,
+          img: img._id,
+        });
+
+        if (errors.length > 0) {
+          res.render("category_form", {
+            title: "Create Category",
+            category,
+            errors,
+          });
+          return;
+        }
+
+        // no errors, data is valid, and category doesn't exist yet:
+        // ADD DOCUMENT
+        if (!req.file?.filename) {
+          // no image data: just save text fields
+          Promise.all([category.save(), img.save()])
+            .then(() => res.redirect(category.url))
+            .catch(next);
+        } else {
+          // there's image data: upload to cloudinary w id of img._id
+          const imageLocation = UPLOAD_PATH + "/" + req.file.filename;
+
+          cloudinary.uploader
+            .upload(imageLocation, {
+              folder: "category",
+              public_id: img._id,
+            })
+            .then((cld_img) => {
+              // delete local copy, create an img document with data & save it
+              fs.unlink(imageLocation, console.error);
+              img.version = cld_img.version;
+              return img.save();
+            })
+            .then(() => category.save())
+            .then(({ url }) => res.redirect(url))
+            .catch(next);
+        }
       })
-      .catch((err) => next(err));
+      .catch(next);
   },
 ];
 
@@ -113,9 +148,7 @@ exports.getDeleteCategory = (req, res, next) => {
         products,
       });
     })
-    .catch((err) => {
-      next(err);
-    });
+    .catch(next);
 };
 
 exports.postDeleteCategory = (req, res, next) => {
@@ -139,24 +172,26 @@ exports.postDeleteCategory = (req, res, next) => {
           category,
           products,
         });
+
+        return;
       } else {
-        // delete & send back to categories
+        // delete category & associated img, then send back to categories
         Category.findByIdAndRemove(id)
-          .exec()
-          .then(() => {
-            res.redirect(`/${INV_URL_NAME}/categories`);
+          .then((removedCategory) => Img.findByIdAndRemove(removedCategory.img))
+          .then((removedImg) => {
+            return cloudinary.uploader.destroy(removedImg.full_path, {
+              invalidate: true,
+              version: removedImg.version,
+            });
           })
-          .catch((err) => next(err));
+          .then(() => res.redirect(`/${INV_URL_NAME}/categories`))
+          .catch(next);
       }
     })
-    .catch((err) => {
-      next(err);
-    });
+    .catch(next);
 };
 
 exports.getUpdateCategory = (req, res, next) => {
-  // get category
-  // render category form and give it category
   const id = mongoose.Types.ObjectId(req.params.id);
   Category.findById(id)
     .exec()
@@ -171,22 +206,13 @@ exports.getUpdateCategory = (req, res, next) => {
     });
 };
 
-// validate & sanitize
-// make new genre
-// if new genre already exists, just redirect
-// otherwise, update the current record
 exports.postUpdateCategory = [
   ...validateAndSanitize,
   (req, res, next) => {
     // extract errors
     let errors = validationResult(req).array();
 
-    const id = mongoose.Types.ObjectId(req.params.id);
-
-    const category = new Category({ name: req.body.name, _id: id });
-
     if (req.body.adminpw !== process.env.ADMIN_PW) {
-      // res.status = 401;
       errors = [
         {
           msg: "Invalid password",
@@ -195,6 +221,11 @@ exports.postUpdateCategory = [
         },
       ];
     }
+
+    const id = mongoose.Types.ObjectId(req.params.id);
+
+    // b/c I'm updating, I can send an obj literal instead of an instance of my model
+    const category = { name: req.body.name, _id: id };
 
     if (errors.length > 0) {
       res.render("category_form", {
@@ -205,28 +236,53 @@ exports.postUpdateCategory = [
       return;
     }
 
-    // Validation & sanitization passed
-    // Make sure there isn't already a category with the same name
-    Category.findOne({ name: req.body.name })
-      .exec()
-      .then((match) => {
-        if (match) {
-          // There's already a category with this name, so just link there
-          res.redirect(`/${INV_URL_NAME}/category/${match._id}`);
-          return;
-        }
+    if (!req.file?.filename) {
+      // there isn't a new file, don't do any cloudinary stuff
+      Category.findByIdAndUpdate(id, category, { new: true })
+        .populate("img")
+        .then((theCategory) => res.redirect(theCategory.url));
+    } else {
+      // there IS a new file, so DO do cloudinary stuff
+      const localImagePath = UPLOAD_PATH + "/" + req.file.filename;
 
-        // Update!
-        Category.findByIdAndUpdate(id, category, {}, (err, theCategory) => {
-          if (err) {
-            return next(err);
-          }
-
-          res.redirect(theCategory.url);
-        });
+      const updateCategoryPromise = Category.findByIdAndUpdate(id, category, {
+        new: true,
       })
-      .catch((err) => {
-        next(err);
+        .populate("img")
+        .exec();
+
+      const updateImgPromise = updateCategoryPromise.then((updatedCategory) => {
+        return cloudinary.uploader.upload(localImagePath, {
+          folder: updatedCategory.img.folder,
+          public_id: updatedCategory.img._id,
+          invalidate: true,
+        });
       });
+
+      Promise.all([updateCategoryPromise, updateImgPromise]).then(
+        ([updatedCategory, cloudUploadResponse]) => {
+          // clear local copy of image
+          fs.unlink(localImagePath, console.error);
+
+          // Update img document with new cloudinary image version
+          const updatedImg = {
+            version: cloudUploadResponse.version,
+            _id: updatedCategory.img._id,
+          };
+
+          return Img.findByIdAndUpdate(updatedImg._id, updatedImg, {
+            new: true,
+          });
+        }
+      );
+
+      Promise.all([updateCategoryPromise, updateImgPromise])
+        .then(([updatedCategory]) => {
+          res.redirect(updatedCategory.url);
+        })
+        .catch((err) => {
+          next(err);
+        });
+    }
   },
 ];

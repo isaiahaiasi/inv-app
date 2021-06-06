@@ -1,3 +1,6 @@
+// dotenv setup
+require("dotenv").config();
+
 var createError = require("http-errors");
 var express = require("express");
 var path = require("path");
@@ -6,8 +9,11 @@ var logger = require("morgan");
 const helmet = require("helmet");
 const compression = require("compression");
 
-// dotenv setup
-require("dotenv").config();
+// confirm existence of cloudinary env keys
+// (don't need to explicitly call config() with CLOUDINARY_URL)
+if (typeof process.env.CLOUDINARY_URL === "undefined") {
+  console.warn("CLOUDINARY CONFIG IS UNDEFINED");
+}
 
 // routes setup
 const indexRouter = require("./routes/index");
@@ -16,7 +22,18 @@ const invRouter = require("./routes/inv");
 var app = express();
 
 // set secure http headers
-app.use(helmet());
+app.use(
+  helmet({
+    contentSecurityPolicy: {
+      directives: {
+        ...helmet.contentSecurityPolicy.getDefaultDirectives(),
+        "img-src": ["'self'", "res.cloudinary.com"],
+        "object-src": ["'self'", "res.cloudinary.com"],
+        "frame-src": ["'self'", "res.cloudinary.com"],
+      },
+    },
+  })
+);
 
 // mongoose setup
 const mongoose = require("mongoose");
