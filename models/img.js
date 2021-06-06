@@ -7,7 +7,9 @@ const ImgSchema = new Schema({
 });
 
 ImgSchema.virtual("url").get(function () {
-  return getImageUrl(this._id, this.version);
+  return this.version
+    ? getImageUrl(this._id, this.version, "category")
+    : "/images/img-404.png";
 });
 
 module.exports = mongoose.model("Img", ImgSchema);

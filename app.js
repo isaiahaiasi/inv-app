@@ -28,6 +28,8 @@ app.use(
       directives: {
         ...helmet.contentSecurityPolicy.getDefaultDirectives(),
         "img-src": ["'self'", "res.cloudinary.com"],
+        "object-src": ["'self'", "res.cloudinary.com"],
+        "frame-src": ["'self'", "res.cloudinary.com"],
       },
     },
   })

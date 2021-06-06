@@ -196,20 +196,21 @@ exports.postDeleteCategory = (req, res, next) => {
             );
 
             cloudinary.uploader
-              .destroy(removedImg._id)
-              .catch((err) => console.error(err));
+              .destroy(() => {
+                console.log(
+                  `attempting to remove ${removedImg._id} from cloudinary`
+                );
+                return removedImg._id;
+              })
+              .catch(console.error);
           })
           .then(() => {
             res.redirect(`/${INV_URL_NAME}/categories`);
           })
-          .catch((err) => {
-            return next(err);
-          });
+          .catch(next);
       }
     })
-    .catch((err) => {
-      next(err);
-    });
+    .catch(next);
 };
 
 exports.getUpdateCategory = (req, res, next) => {
