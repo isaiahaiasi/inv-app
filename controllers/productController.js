@@ -201,34 +201,40 @@ exports.postDeleteProduct = [
       });
     }
 
-    // TODO: this doesn't really make sense anymore
-    if (errors.length > 0) {
-      const err = new Error("Product not found!");
-      err.status = 404;
-      return next(err);
-    }
-
     const id = mongoose.Types.ObjectId(req.body.productid);
-    Product.findByIdAndRemove(id)
+
+    Product.findById(id)
       .exec()
-      .then((removedProduct) => {
-        // this is probably superfluous
-        if (removedProduct == null) {
-          const err = new Error("Product not found!");
-          err.status = 404;
-          return next(err);
+      .then((product) => {
+        if (errors.length > 0) {
+          return res.render("product_delete", {
+            title: "Delete Product " + req.body.name,
+            product,
+            errors,
+          });
         }
 
-        return Img.findByIdAndRemove(removedProduct.img);
-      })
-      .then((removedImg) => {
-        return cloudinary.uploader.destroy(removedImg.full_path, {
-          invalidate: true,
-          version: removedImg.version,
-        });
-      })
-      .then(() => res.redirect(`/${INV_URL_NAME}/products`))
-      .catch((err) => next(err));
+        Product.findByIdAndRemove(id)
+          .exec()
+          .then((removedProduct) => {
+            // this is probably superfluous
+            if (removedProduct == null) {
+              const err = new Error("Product not found!");
+              err.status = 404;
+              return next(err);
+            }
+
+            return Img.findByIdAndRemove(removedProduct.img);
+          })
+          .then((removedImg) => {
+            return cloudinary.uploader.destroy(removedImg.full_path, {
+              invalidate: true,
+              version: removedImg.version,
+            });
+          })
+          .then(() => res.redirect(`/${INV_URL_NAME}/products`))
+          .catch((err) => next(err));
+      });
   },
 ];
 

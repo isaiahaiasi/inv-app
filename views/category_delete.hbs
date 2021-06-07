@@ -23,7 +23,14 @@
         value={{category._id}}
       >
       {{> adminpw}}
-      {{#> button type="submit"}}Delete Item{{/button}}
+      {{#> button type="submit" warn=true}}Delete Item{{/button}}
     </form>
+  {{/if}}
+  {{#if errors}}
+    <ul>
+    {{#each errors}}
+      <li>{{this.msg}}</li>
+    {{/each}}
+    </ul>
   {{/if}}
 {{/main_content}}
